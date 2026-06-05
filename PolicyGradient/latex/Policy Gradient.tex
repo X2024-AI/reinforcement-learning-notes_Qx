@@ -1,0 +1,1437 @@
+% !TEX program = xelatex
+% !TEX encoding = UTF-8
+
+\documentclass[12pt,a4paper]{article}
+
+% ============================================================
+% 基础宏包配置
+% ============================================================
+\usepackage{xeCJK}
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\setsansfont{Arial}
+\setmonofont{Consolas}
+
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{mathtools}
+\usepackage{latexsym}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{diagbox}
+\usepackage{longtable}
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2.5cm,top=3cm,bottom=3cm,headheight=1.5cm}
+
+\usepackage{titlesec}
+\usepackage{titletoc}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{\fontsize{10}{12}\selectfont Policy Gradient 算法详解笔记}
+\fancyfoot[C]{\thepage}
+\fancyfoot[R]{\fontsize{9}{11}\selectfont Reinforcement Learning}
+\usepackage{footnote}
+
+% ============================================================
+% 颜色定义
+% ============================================================
+\usepackage{xcolor}
+\definecolor{deepblue}{RGB}{41,77,155}
+\definecolor{lightblue}{RGB}{70,130,180}
+\definecolor{accentorange}{RGB}{210,105,30}
+\definecolor{softgreen}{RGB}{60,179,113}
+\definecolor{darkgray}{RGB}{60,60,60}
+\definecolor{lightgray}{RGB}{240,240,240}
+\definecolor{lightyellow}{RGB}{255,255,230}
+\definecolor{codegreen}{RGB}{46,139,87}
+\definecolor{codegray}{RGB}{128,128,128}
+\definecolor{authorred}{RGB}{160, 70, 75}  % 优雅的暗绛红，比纯黑更有质感
+
+% ============================================================
+% 自定义命令
+% ============================================================
+\newcommand{\mb}[1]{\mathbf{#1}}
+\newcommand{\bs}[1]{\boldsymbol{#1}}
+\newcommand{\E}{\mathbb{E}}
+\DeclareMathOperator{\Var}{Var}
+\DeclareMathOperator{\Cov}{Cov}
+\DeclareMathOperator{\KL}{KL}
+\DeclareMathOperator{\softmax}{softmax}
+
+% 梯度相关
+\newcommand{\grad}{\nabla}
+\newcommand{\gradtheta}{\grad_{\theta}}
+
+% 常用期望/概率符号
+\newcommand{\ptheta}{p_{\theta}}
+
+% ============================================================
+% 定理环境设置
+% ============================================================
+\usepackage{amsthm}
+\newtheoremstyle{noteplain}%
+  {3pt}%
+  {3pt}%
+  {\itshape}%
+  {0pt}%
+  {\bfseries\color{deepblue}}%
+  {---}%
+  {3pt plus 2pt minus 1pt}%
+  {\thmname{#1}\thmnumber{ #2}\thmnote{ (#3)}}
+
+\newtheoremstyle{noteexercise}%
+  {3pt}%
+  {3pt}%
+  {\upshape}%
+  {0pt}%
+  {\sffamily\bfseries\color{accentorange}}%
+  {---}%
+  {3pt plus 2pt minus 1pt}%
+  {\thmname{#1}\thmnumber{ #2}\thmnote{ (#3)}}
+
+\theoremstyle{noteplain}
+\newtheorem{notation}{注}[section]
+\newtheorem{important}{重要结论}[section]
+
+\theoremstyle{noteexercise}
+\newtheorem{exercise}{思考}[section]
+
+% ============================================================
+% 表格样式
+% ============================================================
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage[colwidth=auto]{colortbl}
+
+% ============================================================
+% 代码高亮设置
+% ============================================================
+\usepackage{listings}
+\lstdefinestyle{mypy}{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  commentstyle=\color{codegray}\itshape,
+  keywordstyle=\color{blue}\bfseries,
+  stringstyle=\color{codegreen},
+  numberstyle=\color{codegray},
+  frame=lines,
+  backgroundcolor=\color{lightgray},
+  lineskip=-0.5pt,
+  tabsize=4,
+  breaklines=true,
+  captionpos=b,
+  numbers=left,
+  stepnumber=1,
+  numbersep=8pt,
+  xleftmargin=2em,
+  framexleftmargin=2em,
+  framexrightmargin=0em,
+  framextopmargin=0em,
+  framexbottommargin=0em,
+  showspaces=false,
+  showstringspaces=false,
+}
+
+\lstdefinestyle{mytex}{
+  language=[LaTeX]TeX,
+  basicstyle=\ttfamily\small,
+  commentstyle=\color{codegray}\itshape,
+  keywordstyle=\color{blue}\bfseries,
+  stringstyle=\color{codegreen},
+  numberstyle=\color{codegray},
+  frame=lines,
+  backgroundcolor=\color{lightgray},
+  lineskip=-0.5pt,
+  tabsize=4,
+  breaklines=true,
+  captionpos=b,
+  numbers=left,
+  stepnumber=1,
+  numbersep=8pt,
+  xleftmargin=2em,
+  framexleftmargin=2em,
+  framexrightmargin=0em,
+  framextopmargin=0em,
+  framexbottommargin=0em,
+  showspaces=false,
+  showstringspaces=false,
+}
+
+\lstset{style=mypy}
+
+% ============================================================
+% TikZ 图形支持（可选，用于绘制网络结构图）
+% ============================================================
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,calc,shapes.geometric,decorations.pathreplacing}
+
+% ============================================================
+% 页面装饰：顶部装饰线
+% ============================================================
+\usepackage{eso-pic}
+\AddToShipoutPicture{%
+  \AtPageUpperLeft{%
+    \hspace{\paperwidth-7cm}\color{deepblue}%
+    \rule[-8pt]{7cm}{3pt}%
+  }%
+}
+
+% ============================================================
+% 引用块设计
+% ============================================================
+\usepackage{tcolorbox}
+\tcbuselibrary{xparse,skins,hooks}
+\newtcolorbox{keypoint}[1][]{
+  colback=lightyellow!50!white,
+  colframe=accentorange!60!black,
+  fonttitle=\sffamily\bfseries\color{accentorange},
+  title=#1,
+  parbox=false,
+  boxrule=1pt,
+  top=6pt,
+  bottom=6pt,
+  left=6pt,
+  right=6pt,
+  arc=4pt,
+  outer arc=4pt,
+  before skip=10pt,
+  after skip=6pt,
+}
+
+\newtcolorbox{summarybox}[1][]{
+  colback=lightblue!15!white,
+  colframe=deepblue!80!black,
+  fonttitle=\sffamily\bfseries\color{deepblue},
+  title=#1,
+  parbox=false,
+  boxrule=1pt,
+  top=6pt,
+  bottom=6pt,
+  left=6pt,
+  right=6pt,
+  arc=4pt,
+  outer arc=4pt,
+  before skip=10pt,
+  after skip=6pt,
+}
+
+\newtcolorbox{darkbox}[1][]{
+  colback=darkgray!95!white,
+  colframe=lightblue!80!white,
+  fonttitle=\sffamily\bfseries\color{lightblue},
+  title=#1,
+  coltext=white,
+  parbox=false,
+  boxrule=0.5pt,
+  top=6pt,
+  bottom=6pt,
+  left=8pt,
+  right=8pt,
+  arc=4pt,
+  outer arc=4pt,
+  before skip=10pt,
+  after skip=6pt,
+}
+
+% ============================================================
+% hyperref 设置（放在最后）
+% ============================================================
+\usepackage[
+  colorlinks=true,
+  linkcolor=deepblue,
+  urlcolor=lightblue,
+  citecolor=accentorange,
+  pdftitle={Policy Gradient 算法详解笔记},
+  pdfauthor={千喜Qx},
+  pdfsubject={Reinforcement Learning},
+  bookmarksnumbered=true,
+  bookmarksopen=true,
+]{hyperref}
+
+% ============================================================
+% 章节标题格式设置
+% ============================================================
+\usepackage{sectsty}
+\sectionfont{\Large\bfseries\color{deepblue}}
+\subsectionfont{\large\bfseries\color{deepblue!80!black}}
+\subsubsectionfont{\normalsize\bfseries\color{deepblue!70!black}}
+
+% ============================================================
+% 目录定制
+% ============================================================
+\contentsmargin{0.5cm}
+\titlecontents{section}[1.2em]
+  {\addvspace{3pt}\large\bfseries\color{deepblue}}
+  {\contentslabel[\quad\thecontentslabel]{2.5em}}
+  {}
+  {\titlerule*[1pc]{.}\contentspage}             % 参数5：指引线和页码
+
+% ============================================================
+% 文章标题
+% ============================================================
+\begin{document}
+
+% ============================================================
+% 封面
+% ============================================================
+\thispagestyle{empty}
+
+\vspace*{1cm}
+
+\begin{center}
+  \parbox{0.9\textwidth}{
+    \centering
+    \rule[6pt]{0.9\textwidth}{2pt}
+    \vspace{0.3cm}
+    {\LARGE\bfseries\color{deepblue} Policy Gradient \\[0.4em] 算法详解笔记}
+    \vspace{0.3cm}
+    \rule[6pt]{0.9\textwidth}{2pt}
+  }
+\end{center}
+
+\vspace{0.8cm}
+
+\begin{center}
+  \begin{minipage}{0.7\textwidth}
+    \centering
+    % 1. 使用 \rmfamily 切换为优雅的衬线宋体/Times，配合自定义的暗红色
+    \large\rmfamily\color{authorred} 
+    千喜 Qx \\[0.6em]
+    
+    % 2. 日期使用缩小一号的衬线体，搭配深灰色，形成完美的视觉主次
+    \normalsize\rmfamily\color{darkgray} 2026/06/05
+  \end{minipage}
+\end{center}
+
+\vspace{1cm}
+
+\tableofcontents
+
+\newpage
+\pagenumbering{arabic}
+\pagestyle{fancy}
+
+% ============================================================
+% 第一章：背景与动机
+% ============================================================
+\section{背景与动机}\label{sec:bg}
+
+\subsection{从 Value-Based 到 Policy-Based}\label{ssec:value-vs-policy}
+
+在强化学习中，算法大致分为两类，如表~\ref{tab:rl-comparison} 所示：
+
+\begin{table}[H]
+  \centering
+  \caption{强化学习算法分类对比}
+  \label{tab:rl-comparison}
+  \begin{tabular}{>{\centering\arraybackslash}m{3cm}
+                 >{\centering\arraybackslash}m{4cm}
+                 >{\centering\arraybackslash}m{6cm}}
+    \toprule
+    \textbf{方法} & \textbf{代表算法} & \textbf{核心思想} \\
+    \midrule
+    \textbf{Value-Based} & Q-Learning、DQN & 学习状态或状态-动作的价值 $Q(s,a)$，再根据价值选择动作 \\
+    \midrule
+    \textbf{Policy-Based} & Policy Gradient、REINFORCE & 直接参数化策略 $\pi_\theta(a|s)$，通过梯度上升优化策略 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\textbf{Value-Based 的局限：}
+\begin{itemize}
+  \setlength{\itemsep}{0.3em}
+  \item 对于连续动作空间，$Q(s,a)$ 需要对无限个动作求极值，无法直接使用
+  \item 策略本身是确定性的（$\epsilon$-greedy），难以表达随机策略
+  \item 当动作空间较大时，softmax 计算代价高
+\end{itemize}
+
+\textbf{Policy-Based 的优势：}
+\begin{itemize}
+  \setlength{\itemsep}{0.3em}
+  \item 自然处理连续动作空间（输出分布参数）
+  \item 直接优化最终目标（策略的期望奖励）
+  \item 收敛更平滑，避免了对价值函数的过估计问题
+\end{itemize}
+
+\subsection{策略梯度的核心思想}\label{ssec:core-idea}
+
+策略梯度的核心思想是\textbf{直接对策略的参数 $\theta$ 求梯度}，通过梯度上升使得目标函数 $\mathcal{J}(\theta)$ 增大：
+
+\begin{equation}\label{eq:pg-update}
+  \theta \leftarrow \theta + \alpha \; \grad_\theta \mathcal{J}(\theta)
+\end{equation}
+
+其中 $\grad_\theta \mathcal{J}(\theta)$ 指向策略改善的方向。
+
+\begin{keypoint}[核心结论]
+  Policy Gradient 的本质就是\textbf{``好的动作多做，坏的动作少做''}。通过轨迹奖励 $G_t$ 来加权调整动作选择的概率分布。
+\end{keypoint}
+
+% ============================================================
+% 第二章：核心定义与符号体系
+% ============================================================
+\section{核心定义与符号体系}\label{sec:def}
+
+\subsection{轨迹（Trajectory）的定义}\label{ssec:trajectory}
+
+轨迹（Trajectory）$\tau$ 是指一个完整的交互序列：
+
+\begin{equation}\label{eq:tau}
+  \tau = (s_0,\; a_0,\; r_1,\; s_1,\; a_1,\; r_2,\; \cdots,\; s_T,\; a_T,\; r_{T+1},\; s_{T+1})
+\end{equation}
+
+其中 $T$ 是轨迹长度（可以是有限的或无限的）。
+
+\begin{notation}[关于奖励下标的说明]
+  在时间步 $t=0$ 时，智能体处于状态 $s_0$ 并刚刚决定采取动作 $a_0$。动作还未执行、环境还未给出反馈，因此没有 $r_0$。奖励 $r_t$ 严格来说是``在状态 $s_{t-1}$ 下采取动作 $a_{t-1}$ 后获得的奖励''，即 $r_{t+1} \sim P(r|s_t,a_t)$，奖励的下标总是比动作晚一步。
+\end{notation}
+
+\subsection{轨迹概率分解}\label{ssec:prob-decompose}
+
+一条轨迹 $\tau$ 在策略 $\pi_\theta$ 下的概率为：
+
+\begin{equation}\label{eq:p-tau}
+  p(\tau|\theta) = p(s_0) \prod_{t=0}^{T} \pi_\theta(a_t|s_t) \cdot P(s_{t+1}|s_t,a_t)
+\end{equation}
+
+符号说明：
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item $p(s_0)$：初始状态分布（由环境决定，与 $\theta$ 无关）
+  \item $\pi_\theta(a_t|s_t)$：在状态 $s_t$ 下选择动作 $a_t$ 的概率（策略网络输出）
+  \item $P(s_{t+1}|s_t,a_t)$：状态转移概率（由环境决定，与 $\theta$ 无关）
+\end{itemize}
+
+\textbf{注意：} 只有 $\pi_\theta(a_t|s_t)$ 与参数 $\theta$ 有关，其余均为环境参数。
+
+\subsection{目标函数}\label{ssec:obj}
+
+我们希望最大化所有可能轨迹的期望奖励：
+
+\begin{equation}\label{eq:obj}
+  \mathcal{J}(\theta) = \E_{\tau\sim\pi_\theta}[R(\tau)] = \int p(\tau|\theta) R(\tau)\, d\tau
+\end{equation}
+
+其中 $R(\tau) = \sum_{t=0}^{T} r_t$ 是整条轨迹的总奖励。
+
+符号说明：
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item $\E_{\tau\sim\pi_\theta}[\cdot]$：在策略 $\pi_\theta$ 生成的轨迹上取期望
+  \item $R(\tau)$：轨迹的总奖励，可以是折扣的或非折扣的
+\end{itemize}
+
+% ============================================================
+% 第三章：梯度推导
+% ============================================================
+\section{梯度推导（逐步）}\label{sec:gradient-derive}
+
+我们的目标是找到参数 $\theta$ 的梯度 $\grad_\theta \mathcal{J}(\theta)$，通过梯度上升来更新参数。
+
+\subsection{第一步：对目标函数求导}\label{ssec:step1}
+
+\begin{equation}\label{eq:grad-int}
+  \grad_\theta \mathcal{J}(\theta)
+  = \grad_\theta \int p(\tau|\theta) R(\tau)\, d\tau
+  = \int \grad_\theta p(\tau|\theta) R(\tau)\, d\tau
+\end{equation}
+
+这里将梯度 $\grad_\theta$ 推进到积分内部（可以交换，因为积分是对 $\tau$ 的，$\grad_\theta$ 作用于 $\theta$）。
+
+\begin{exercise}
+  能不能说模型输出的轨迹 $\tau$ 跟参数 $\theta$ 有关，那为什么不对 $R(\tau)$ 也求梯度？
+\end{exercise}
+
+\begin{keypoint}[答]
+  不能。因为 $\theta$ 只是决定一个轨迹出现的概率大小，但是对某条特定轨迹而言，它的奖励是由环境规则决定的，是固定的。
+\end{keypoint}
+
+\subsection{第二步：对数导数技巧（Likelihood Ratio Trick）}\label{ssec:step2}
+
+利用恒等式：
+
+\begin{equation}\label{eq:log-deriv}
+  \grad_\theta p(\tau|\theta) = p(\tau|\theta) \; \grad_\theta \log p(\tau|\theta)
+\end{equation}
+
+代入第一步的结果：
+
+\begin{equation}\label{eq:grad-after-log}
+  \grad_\theta \mathcal{J}(\theta)
+  = \int p(\tau|\theta) \grad_\theta \log p(\tau|\theta) \cdot R(\tau)\, d\tau
+\end{equation}
+
+这正是期望的形式：
+
+\begin{equation}\label{eq:grad-expectation}
+  \grad_\theta \mathcal{J}(\theta) = \E_{\tau\sim\pi_\theta}\left[ \grad_\theta \log p(\tau|\theta) \cdot R(\tau) \right]
+\end{equation}
+
+\textbf{为什么这样做？} 直接对 $p(\tau|\theta)$ 求导很困难，轨迹概率涉及复杂的策略概率乘积。采用对数导数技巧后，$p(\tau|\theta)$ 代入目标函数的梯度公式化简为期望形式，就能用蒙特卡洛采样来估算梯度。
+
+\begin{summarybox}[更深入的理解：对数导数技巧的通用性]
+  这种技巧不只用于策略梯度，而是\textbf{一般参数化概率分布下求期望梯度的核心技巧}：
+
+  \begin{equation}\label{eq:general-likelihood}
+    \grad_{\theta} \E_{x\sim p_{\theta}(x)}[f(x)]
+    = \E_{x\sim p_{\theta}(x)}\left[ f(x) \, \grad_{\theta} \log p_{\theta}(x) \right]
+  \end{equation}
+
+  在 Policy Gradient 里，$x = \tau$，$f(x) = R(\tau)$，因此自然用到了这一技巧。
+\end{summarybox}
+
+\subsection{第三步：展开 $\log p(\tau|\theta)$}\label{ssec:step3}
+
+回忆轨迹概率式~\eqref{eq:p-tau}。取对数：
+
+\begin{equation}\label{eq:log-p-tau}
+  \log p(\tau|\theta)
+  = \log p(s_0)
+  + \sum_{t=0}^{T} \log \pi_\theta(a_t|s_t)
+  + \sum_{t=0}^{T} \log P(s_{t+1}|s_t,a_t)
+\end{equation}
+
+对 $\theta$ 求梯度：
+
+\begin{equation}\label{eq:grad-log-p-tau}
+  \grad_\theta \log p(\tau|\theta) = \sum_{t=0}^{T} \grad_\theta \log \pi_\theta(a_t|s_t)
+\end{equation}
+
+\textbf{关键点：}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item $\log p(s_0)$：初始状态分布，与 $\theta$ 无关，梯度为 $0$
+  \item $\sum \log P(s_{t+1}|s_t,a_t)$：状态转移概率，由环境决定，与 $\theta$ 无关，梯度为 $0$
+  \item \textbf{只有 $\sum \grad_\theta \log \pi_\theta(a_t|s_t)$ 保留下来}，这是策略网络对参数的梯度
+\end{itemize}
+
+\subsection{第四步：得到原始梯度公式}\label{ssec:step4}
+
+代回期望公式~\eqref{eq:grad-expectation}：
+
+\begin{equation}\label{eq:grad-raw}
+  \grad_\theta \mathcal{J}(\theta)
+  = \E_{\tau\sim\pi_\theta}\left[
+    \left( \sum_{t=0}^{T} \grad_\theta \log \pi_\theta(a_t|s_t) \right)
+    \left( \sum_{k=0}^{T} r_k \right)
+  \right]
+\end{equation}
+
+\textbf{直观理解：} 整条轨迹的总奖励 $R(\tau)$ 作为权重，同时强化轨迹中出现的所有动作。
+
+\begin{exercise}
+  怎么能不分具体动作的好坏，依照轨迹级的奖励信号，让所有的动作输出的概率统一加减？
+\end{exercise}
+
+\begin{keypoint}[答：信用分配问题]
+  这在强化学习中叫做\textbf{信用分配问题}（Credit Assignment Problem）。但即使这样``一刀切''地更新，在统计学上模型优化依旧能够奏效——好动作 A 所在的轨迹总奖励高，被强化很多遍；坏动作 B 所在的轨迹总奖励低，被强化很少。最终 A 的概率被拉高，B 的概率被相对拉低。
+
+  但这样的算法样本效率低，于是引发了后续更精细的更新算法：其一是引入下文的``因果律''，其二是 Actor-Critic、PPO 等采用了优势函数来评估每一步动作的好坏，从而精确调控某一步动作的概率。
+\end{keypoint}
+
+% ============================================================
+% 第四章：因果律
+% ============================================================
+\section{因果律与梯度简化}\label{sec:causality}
+
+\subsection{问题：过去奖励不应影响当前动作}\label{ssec:causality-problem}
+
+上述公式有一个明显的问题：用整条轨迹的总奖励去奖励或惩罚\textbf{每一个}动作。但第 $t$ 步做出的决策，不应该被第 $t$ 步之前就已经发生的奖励所影响。
+
+可以严格证明（见下节），对于 $k < t$：
+
+\begin{equation}\label{eq:causality-zero}
+  \E_\tau\!\left[ \grad_\theta \log \pi_\theta(a_t|s_t) \cdot r_k \right] = 0
+\end{equation}
+
+这意味着过去奖励对当前动作的梯度贡献在期望意义下为零。
+
+\subsection{严格证明}\label{ssec:causality-proof}
+
+我们需要证明：对于任意 $k \le t$（即奖励 $r_k$ 在动作 $a_t$ 发生之前），有式~\eqref{eq:causality-zero} 成立。
+
+\textbf{第一步：轨迹概率的拆解。}
+
+将轨迹 $\tau$ 拆分为三部分：
+\begin{itemize}
+  \item $\tau_{:t} = (s_0,a_0,\cdots,s_t)$：$t$ 时刻之前的历史
+  \item $a_t$：$t$ 时刻采取的动作
+  \item $\tau_{t+1:} = (r_{t+1},s_{t+1},\cdots,r_T,s_T)$：$t$ 时刻之后的轨迹
+\end{itemize}
+
+整条轨迹的联合概率：
+
+\begin{equation}\label{eq:tau-split}
+  p(\tau|\theta) = p(\tau_{:t}|\theta) \cdot \pi_\theta(a_t|s_t) \cdot p(\tau_{t+1:}|\tau_{:t},a_t,\theta)
+\end{equation}
+
+\textbf{第二步：利用重期望公式。}
+
+\begin{equation}\label{eq:total-exp}
+  \E_\tau[\grad_\theta \log \pi_\theta(a_t|s_t) \cdot r_k]
+  = \E_{\tau_{:t},a_t}\!\left[
+    \E_{\tau_{t+1:}|\tau_{:t},a_t}\!
+    \left[ \grad_\theta \log \pi_\theta(a_t|s_t) \cdot r_k \right]
+  \right]
+\end{equation}
+
+\textbf{第三步：识别常数。}
+
+对于给定的历史 $\tau_{:t}$ 和动作 $a_t$，奖励 $r_k$（其中 $k \le t$）和 $\grad_\theta \log \pi_\theta(a_t|s_t)$ 都是\textbf{已知常数}，与后续轨迹 $\tau_{t+1:}$ 无关。
+
+内部条件期望可以将它们作为常数提出：
+
+\begin{equation}\label{eq:inner-exp}
+  \E_{\tau_{t+1:}|\tau_{:t},a_t}\!
+  \left[ \grad_\theta \log \pi_\theta(a_t|s_t) \cdot r_k \right]
+  = \grad_\theta \log \pi_\theta(a_t|s_t) \cdot r_k
+\end{equation}
+
+代回外层期望：
+
+\begin{equation}\label{eq:outer-exp}
+  = \E_{\tau_{:t},a_t}\!\left[ \grad_\theta \log \pi_\theta(a_t|s_t) \cdot r_k \right]
+\end{equation}
+
+\textbf{第四步：展开积分。}
+
+\begin{equation}\label{eq:expand-int}
+  = \int_{\tau_{:t}}\!\int_{a_t}
+  p(\tau_{:t}|\theta) \cdot \pi_\theta(a_t|s_t) \cdot \grad_\theta \log \pi_\theta(a_t|s_t) \cdot r_k
+  \; da_t \; d\tau_{:t}
+\end{equation}
+
+\textbf{第五步：对数导数还原。}
+
+利用恒等式 $\pi_\theta \cdot \grad_\theta \log \pi_\theta = \grad_\theta \pi_\theta$：
+
+\begin{equation}\label{eq:log-restore}
+  = \int_{\tau_{:t}}\!\int_{a_t}
+  p(\tau_{:t}|\theta) \cdot \grad_\theta \pi_\theta(a_t|s_t) \cdot r_k
+  \; da_t \; d\tau_{:t}
+\end{equation}
+
+将 $r_k$（与 $a_t$ 无关）移到外层积分：
+
+\begin{equation}\label{eq:move-out}
+  = \int_{\tau_{:t}} p(\tau_{:t}|\theta) \cdot r_k \cdot
+  \left( \int_{a_t} \grad_\theta \pi_\theta(a_t|s_t) \; da_t \right)
+  d\tau_{:t}
+\end{equation}
+
+\textbf{第六步：核心戏法——全空间概率积分为 $1$。}
+
+根据微积分基本定理，将梯度符号提到积分号外：
+
+\begin{equation}\label{eq:grad-int-switch}
+  \int_{a_t} \grad_\theta \pi_\theta(a_t|s_t) \; da_t
+  = \grad_\theta\!\left( \int_{a_t} \pi_\theta(a_t|s_t) \; da_t \right)
+\end{equation}
+
+因为策略 $\pi_\theta(a_t|s_t)$ 是一个合法的概率分布，它对所有可能动作的积分（离散为求和）恒等于 $1$：
+
+\begin{equation}\label{eq:pi-integral-1}
+  \int_{a_t} \pi_\theta(a_t|s_t) \; da_t = 1
+\end{equation}
+
+所以：
+
+\begin{equation}\label{eq:grad-of-1}
+  \int_{a_t} \grad_\theta \pi_\theta(a_t|s_t) \; da_t = \grad_\theta(1) = 0
+\end{equation}
+
+\textbf{第七步：最终结果。}
+
+代回整个表达式：
+
+\begin{equation}\label{eq:final-zero}
+  = \int_{\tau_{:t}} p(\tau_{:t}|\theta) \cdot r_k \cdot 0 \; d\tau_{:t} = 0
+\end{equation}
+
+\textbf{证明完毕。}
+
+\begin{summarybox}[核心直观总结]
+  因为全空间概率积分 $\int \pi_\theta = 1 \Rightarrow \grad 1 = 0$，当 $k \le t$ 时，奖励 $r_k$ 不包含当前动作 $a_t$ 之后的随机性，可以被当作常数提出。剩下的部分对整个动作空间积分，由于概率归一化，梯度贡献为零。
+\end{summarybox}
+
+\subsection{简化后的梯度公式}\label{ssec:simplified}
+
+由于过去奖励对当前动作的梯度贡献为零，我们可以把奖励求和从 $k=0$ 截断到 $k=t$，即从当前时间步开始计算未来累计奖励：
+
+\begin{equation}\label{eq:Gt-def}
+  G_t \equiv \sum_{k=t}^{T} r_k
+\end{equation}
+
+\textbf{最终梯度公式（策略梯度定理）}：
+
+\begin{equation}\label{eq:pgt}
+  \grad_\theta \mathcal{J}(\theta)
+  = \E_{\tau\sim\pi_\theta}\left[
+    \sum_{t=0}^{T} \grad_\theta \log \pi_\theta(a_t|s_t) \cdot G_t
+  \right]
+\end{equation}
+
+% ============================================================
+% 第五章：REINFORCE 算法
+% ============================================================
+\section{REINFORCE 算法}\label{sec:reinforce}
+
+\subsection{从公式到算法}\label{ssec:reinforce-formula}
+
+根据上述推导，我们得到了梯度公式~\eqref{eq:pgt}。
+
+在代码实现中，我们无法穷举所有轨迹来计算完美的期望。让策略 $\pi_\theta$ 与环境交互，采样出一条或几条真实轨迹，用采样均值近似期望：
+
+\begin{equation}\label{eq:mc-approx}
+  \grad_\theta \mathcal{J}(\theta) \approx \sum_{t=0}^{T} \grad_\theta \log \pi_\theta(a_t|s_t) \cdot G_t
+\end{equation}
+
+对于单个时间步 $t$，它对整体梯度的贡献是：
+
+\begin{equation}\label{eq:delta-theta}
+  \Delta\theta_t \;=\; \grad_\theta \log \pi_\theta(a_t|s_t) \cdot G_t
+\end{equation}
+
+这就是 REINFORCE 的核心更新公式。
+
+符号说明：
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item $\grad_\theta \log \pi_\theta(a_t|s_t)$：策略网络输出的对数概率的梯度，表示``在状态 $s_t$ 下增加选择动作 $a_t$ 的方向''
+  \item $G_t$：加权系数，表示这个动作对整体奖励的贡献程度
+\end{itemize}
+
+\subsection{完整算法流程（伪代码）}\label{ssec:reinforce-pseudocode}
+
+\begin{darkbox}[REINFORCE 算法伪代码]
+\begin{verbatim}
+输入：策略网络参数 θ，超参数：学习率 α，折扣因子 γ
+
+1. 初始化 θ
+
+2. repeat 直到收敛：
+3.     使用当前策略 π_θ 与环境交互，采样一条完整轨迹
+4.     τ = (s_0, a_0, r_1, s_1, ..., s_T, a_T, r_T)
+
+5.     for t = 0 to T do
+6.         计算未来累计奖励：G_t = Σ_{k=t}^{T} r_k
+           （或折扣版本 G_t = r_k + γ G_{t+1}）
+7.         计算梯度增量：Δθ = Δθ + ∇_θ log π_θ(a_t|s_t) · G_t
+8.     end for
+
+9.     更新参数：θ = θ + α · Δθ
+10. end repeat
+\end{verbatim}
+\end{darkbox}
+
+在深度学习框架中，通常将损失函数定义为 $\mathcal{L} = -\sum_t \log \pi_\theta(a_t|s_t) \cdot G_t$，然后使用梯度下降（即反向传播）来更新参数。
+
+\subsection{直观理解}\label{ssec:reinforce-intuition}
+
+\begin{itemize}
+  \setlength{\itemsep}{0.4em}
+  \item $\log \pi_\theta(a_t|s_t)$：表示``增加在状态 $s_t$ 下选择动作 $a_t$ 的概率''的方向
+  \item $G_t$：是权重，决定这个方向的强度
+\end{itemize}
+
+如果 $G_t > 0$（奖励为正），梯度方向就是\textbf{增加}该动作的概率。
+如果 $G_t < 0$（奖励为负），梯度方向就是\textbf{减少}该动作的概率。
+
+\begin{important}
+  Policy Gradient 的本质就是``好的动作多做，坏的动作少做''。
+\end{important}
+
+\subsection{REINFORCE 的方差问题}\label{ssec:reinforce-variance}
+
+虽然 REINFORCE 在数学上优雅，但存在严重的方差问题：
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item $G_t$ 是通过单条轨迹估计的随机量，方差很大
+  \item 每次采样不同的轨迹，梯度估计波动剧烈
+  \item 导致学习不稳定，收敛速度慢
+\end{itemize}
+
+\textbf{解决方案：} 引入 Baseline（见下一章）。
+
+% ============================================================
+% 第六章：方差减小技术——Baseline
+% ============================================================
+\section{方差减小技术——Baseline}\label{sec:baseline}
+
+\subsection{全正/全负奖励也能工作的原因}\label{ssec:all-positive}
+
+\textbf{问题：} 如果所有轨迹的奖励都是正的（如 $R(\tau_1) = 100,\; R(\tau_2) = 10$），梯度方向岂不是要增加所有动作的概率？
+
+\textbf{答案：} 这确实会发生，但因为概率总和恒等于 $1$（$\sum \pi = 1$），当某个动作的概率被大幅增加时，其他动作的概率必然相对减少。
+
+但这会导致方差极大：在随机采样下，采到哪个轨迹完全看运气，导致梯度估计不稳定。
+
+\subsection{Baseline 的正确性：不影响期望值}\label{ssec:baseline-proof}
+
+\textbf{核心思想：} 从奖励中减去一个基线 $b(s)$，使得权重有正有负：
+
+\begin{equation}\label{eq:grad-with-baseline}
+  \grad_\theta \mathcal{J} \approx \sum_{t=0}^{T} \grad_\theta \log \pi_\theta(a_t|s_t) \cdot (G_t - b(s_t))
+\end{equation}
+
+\textbf{需要证明：} 减去 $b(s_t)$ 不会改变梯度的期望值，即 $\E[\grad_\theta \log \pi_\theta(a_t|s_t) \cdot b(s_t)] = 0$。
+
+证明与第~\ref{ssec:causality-proof} 节类似：$b(s_t)$（与 $a_t$ 无关）可以提到积分外，剩下的部分对整个动作空间积分，由于概率归一化 $\int \grad_\theta \pi_\theta = \grad_\theta(1) = 0$，整个积分为零。
+
+\begin{important}
+  任何只依赖于状态 $s$ 而不依赖于动作 $a$ 的函数 $b(s)$ 作为基线，都不会改变梯度期望值，但能有效减小方差。
+\end{important}
+
+\subsection{改进后的梯度估计}\label{ssec:baseline-est}
+
+引入 Baseline 后，梯度公式变为式~\eqref{eq:grad-with-baseline}。
+
+当 $G_t > b(s_t)$ 时（表现高于平均水平），权重为正，动作被强化；
+当 $G_t < b(s_t)$ 时（表现低于平均水平），权重为负，动作被抑制。
+
+\textbf{常用基线：} 当前状态的值函数 $V^\pi(s_t)$。
+
+引入折扣因子 $\gamma$ 后的完整公式：
+
+\begin{equation}\label{eq:grad-discounted-baseline}
+  \grad_\theta \mathcal{J} \approx
+  \sum_{t=0}^{T} \grad_\theta \log \pi_\theta(a_t|s_t) \cdot
+  \left( \sum_{k=t}^{T} \gamma^{k-t} r_k - b(s_t) \right)
+\end{equation}
+
+\subsection{为什么 baseline 常用 $V^\pi(s)$ 而不是 $Q^\pi(s,a)$？}\label{ssec:v-vs-q}
+
+\textbf{理论上：} 用 $Q(s,a)$ 作为基线也是可以的，这实际上是优势函数 $A^\pi(s,a) = Q^\pi(s,a) - V^\pi(s)$ 的形式。
+
+\textbf{工程实践中：} 用 $V(s)$ 更常见，原因如下：
+
+\begin{enumerate}
+  \setlength{\itemsep}{0.3em}
+  \item $V(s)$ 只依赖于状态，任何只依赖状态的函数都可以作为基线而不改变期望值；而 $Q(s,a)$ 依赖动作，引入它会改变期望。
+  \item $V(s)$ 的估计更简单：只需要一个输出（标量），而 $Q^\pi(s,a)$ 需要对每个动作都有一个估计，对于大动作空间代价高昂。
+  \item 实际中通常估计 $V(s)$ 然后通过 TD-error 近似 $A(s,a)$。
+\end{enumerate}
+
+\begin{keypoint}[总结]
+  $V^\pi(s)$ 是工程上的最优选择——它满足基线的条件（只依赖状态），同时估计简单，且能有效减少方差。
+\end{keypoint}
+
+% ============================================================
+% 第七章：连续动作空间的处理
+% ============================================================
+\section{连续动作空间的处理}\label{sec:continuous}
+
+\subsection{离散 vs 连续的本质区别}\label{ssec:discrete-vs-continuous}
+
+\begin{table}[H]
+  \centering
+  \caption{离散与连续动作空间的对比}
+  \label{tab:cont-comparison}
+  \begin{tabular}{>{\centering\arraybackslash}m{3.5cm}
+                 >{\centering\arraybackslash}m{4.5cm}
+                 >{\centering\arraybackslash}m{4.5cm}}
+    \toprule
+    \textbf{维度} & \textbf{离散动作空间} & \textbf{连续动作空间} \\
+    \midrule
+    神经网络输出 & 每个动作的概率值 $(p_1,p_2,\cdots)$ & 分布参数 $(\mu,\sigma)$ \\
+    \midrule
+    动作获取方式 & $\text{Categorical}(p).\text{sample}()$ & $\text{Normal}(\mu,\sigma).\text{sample}()$ \\
+    \midrule
+    算法核心 & 增大高分动作的概率值 & 改变分布形状，使高分动作区域的密度变大 \\
+    \midrule
+    计算复杂性 & 随动作数量线性增加 & 与动作数量无关 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{神经网络输出分布参数}\label{ssec:gaussian-policy}
+
+在连续动作空间中，我们不再让神经网络输出每个动作的概率（因为无法枚举无限个动作），而是输出\textbf{概率分布的参数}。
+
+\textbf{高斯策略}（最常用）：
+
+\begin{equation}\label{eq:gaussian}
+  \pi_\theta(a|s) = \mathcal{N}(a|\;\mu(s),\;\sigma^2(s))
+\end{equation}
+
+其中 $\mu(s)$ 和 $\sigma(s)$ 由神经网络输出：
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item 输入：状态 $s$
+  \item 输出：均值 $\mu(s)$ 和标准差 $\sigma(s)$
+\end{itemize}
+
+\textbf{为什么用高斯分布？}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item 高斯分布是自然且通用的连续分布
+  \item 数学性质良好，对数概率的梯度有解析形式
+  \item 可以通过调整 $\mu$ 和 $\sigma$ 来控制探索程度
+\end{itemize}
+
+\subsection{高斯策略的对数概率梯度}\label{ssec:gaussian-grad}
+
+对于高斯策略 $\pi_\theta(a|s) = \mathcal{N}(\mu,\sigma^2)$，对数概率为：
+
+\begin{equation}\label{eq:log-gaussian}
+  \log \pi_\theta(a|s)
+  = -\frac{1}{2}\log(2\pi\sigma^2) - \frac{(a-\mu)^2}{2\sigma^2}
+\end{equation}
+
+对 $\theta$ 求梯度：
+
+\begin{equation}\label{eq:grad-log-gaussian}
+  \grad_\theta \log \pi_\theta(a|s)
+  = \frac{(a-\mu)}{\sigma^2}\,\grad_\theta\mu
+  - \left( \frac{(a-\mu)^2}{\sigma^2} - 1 \right)\,\grad_\theta\sigma
+\end{equation}
+
+\textbf{注意：} 这里的 $\grad_\theta\mu$ 和 $\grad_\theta\sigma$ 是神经网络的梯度，由反向传播计算。
+
+\subsection{为什么不需要遍历无穷动作空间？}\label{ssec:sampling}
+
+\textbf{问题：} 在连续动作空间中，理论上存在无穷多个动作，如果要对所有动作计算概率积分（或求和），岂不是无法操作？
+
+\textbf{答案：} 策略梯度的巧妙之处——\textbf{我们不计算积分，只进行采样}。
+
+策略梯度公式中的期望：
+
+\begin{equation}\label{eq:expectation-sampling}
+  \grad_\theta \mathcal{J} = \E_{s\sim d^\pi,\; a\sim\pi_\theta}\!
+  \left[ \grad_\theta \log \pi_\theta(a|s) \cdot G_t \right]
+\end{equation}
+
+在代码实现中：
+\begin{enumerate}
+  \setlength{\itemsep}{0.3em}
+  \item \textbf{采样}：根据当前策略 $\pi_\theta$ 采样一个动作 $a_t$
+  \item \textbf{计算}：计算该动作的 $\grad_\theta \log \pi_\theta(a_t|s_t)$
+  \item \textbf{加权}：乘以 $G_t$ 作为梯度估计
+\end{enumerate}
+
+\textbf{我们不需要遍历整个动作空间}，只需要计算``实际执行的那个动作''的梯度。
+
+把连续策略想象成``捏橡皮泥''：
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item 初始状态：分布形状扁平（高熵），智能体在乱动（随机探索）
+  \item 采样与奖励：智能体根据当前 $\mu$ 和 $\sigma$ 采样出一个动作 $a_\text{sample}$
+  \item 计算梯度：如果 $G_t$ 很大，梯度会把均值 $\mu$ \textbf{拉向} $a_\text{sample}$，并可能\textbf{减小} $\sigma$（让分布变窄）
+  \item 如果 $G_t$ 很小，梯度会把均值 $\mu$ \textbf{推离} $a_\text{sample}$
+\end{itemize}
+
+\begin{keypoint}[核心结论]
+  我们不是计算整个概率空间的分布，而是通过不断地在特定点采样，通过梯度下降告诉神经网络：``在这个状态 $s$ 下，刚才采样的那个动作 $a$ 效果不错（或很差），请把那个点附近的概率密度调高（或调低）。''
+\end{keypoint}
+
+% ============================================================
+% 第八章：数值小例子
+% ============================================================
+\section{数值小例子}\label{sec:numerical}
+
+让我们用一个完整的例子来展示梯度计算和参数更新的过程。
+
+\subsection{环境设定}\label{ssec:env}
+
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item \textbf{状态空间：} $S = \{s_1, s_2\}$（两个状态）
+  \item \textbf{动作空间：} $A = \{a_1, a_2\}$（两个动作）
+  \item \textbf{折扣因子：} $\gamma = 1$（非折扣）
+  \item \textbf{目标：} 最大化期望累计奖励
+\end{itemize}
+
+\subsection{初始策略参数}\label{ssec:init}
+
+使用 softmax 策略：
+
+\begin{equation}\label{eq:softmax}
+  \pi_\theta(a|s) = \frac{e^{\phi(s,a)^T \theta}}{\sum_{a'} e^{\phi(s,a')^T \theta}}
+\end{equation}
+
+设特征向量 $\phi(s,a)$：$\phi(s_1,a_1) = 0$，$\phi(s_1,a_2) = 1$，$\phi(s_2,a_1) = 0$，$\phi(s_2,a_2) = 1$。
+
+初始参数：$\theta = [0, 0]$（两个状态的权重初始化为 $0$）。
+
+\textbf{初始策略}（$w=0$ 时两个动作概率均为 $0.5$）：
+\begin{itemize}
+  \item 在 $s_1$ 下：$\pi(a_1|s_1) = 0.5$，$\pi(a_2|s_1) = 0.5$
+  \item 在 $s_2$ 下：$\pi(a_1|s_2) = 0.5$，$\pi(a_2|s_2) = 0.5$
+\end{itemize}
+
+\subsection{单条轨迹采样}\label{ssec:sampled-trajectory}
+
+假设我们采样到以下轨迹：
+
+\begin{equation}\label{eq:tau-sample}
+  \tau = (s_1,\; a_2,\; r_1=1,\; s_2,\; a_1,\; r_2=0)
+\end{equation}
+
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item $t=0$：在 $s_1$ 选择 $a_2$，获得 $r_1 = 1$，转移到 $s_2$
+  \item $t=1$：在 $s_2$ 选择 $a_1$，获得 $r_2 = 0$，轨迹结束
+\end{itemize}
+
+\textbf{计算 $G_t$：}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item $G_0 = r_1 + r_2 = 1 + 0 = 1$
+  \item $G_1 = r_2 = 0$
+\end{itemize}
+
+\subsection{梯度计算逐项展开}\label{ssec:gradient-compute}
+
+策略梯度的计算公式：
+
+\begin{equation}\label{eq:pg-sample}
+  \grad_\theta \mathcal{J} \approx \sum_{t=0}^{1} \grad_\theta \log \pi_\theta(a_t|s_t) \cdot G_t
+\end{equation}
+
+对于 softmax 策略：
+
+\begin{equation}\label{eq:grad-softmax}
+  \grad_\theta \log \pi_\theta(a|s) = \phi(s,a) - \E_{a'\sim\pi_\theta}[\phi(s,a')]
+\end{equation}
+
+\textbf{步骤 1：计算 $\grad_\theta \log \pi_\theta(a_2|s_1)$}
+
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item $\phi(s_1,a_2) = [0,1]$
+  \item 期望特征：$0.5\cdot[0,0] + 0.5\cdot[0,1] = [0,0.5]$
+\end{itemize}
+
+\[
+\grad_\theta \log \pi_\theta(a_2|s_1) = [0,1] - [0,0.5] = [0,0.5]
+\]
+
+\textbf{步骤 2：计算 $\grad_\theta \log \pi_\theta(a_1|s_2)$}
+
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item $\phi(s_2,a_1) = [0,0]$
+  \item 期望特征：$0.5\cdot[0,0] + 0.5\cdot[0,1] = [0,0.5]$
+\end{itemize}
+
+\[
+\grad_\theta \log \pi_\theta(a_1|s_2) = [0,0] - [0,0.5] = [0,-0.5]
+\]
+
+\textbf{步骤 3：组装梯度}
+
+\[
+\Delta\theta = [0,0.5]\cdot 1 + [0,-0.5]\cdot 0 = [0,0.5]
+\]
+
+\subsection{参数更新}\label{ssec:param-update}
+
+使用学习率 $\alpha = 0.1$：
+
+\[
+\theta_{\text{new}} = [0,0] + 0.1\cdot[0,0.5] = [0,0.05]
+\]
+
+\textbf{更新后的策略：}
+
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item 在 $s_1$ 下：$\pi(a_1|s_1) \approx 0.487$，$\pi(a_2|s_1) \approx 0.513$
+  \item 在 $s_2$ 下：$\pi(a_1|s_2) \approx 0.487$，$\pi(a_2|s_2) \approx 0.513$
+\end{itemize}
+
+\subsection{更新前后策略对比}\label{ssec:compare}
+
+\begin{table}[H]
+  \centering
+  \caption{更新前后策略概率对比}
+  \label{tab:compare}
+  \begin{tabular}{ccccr}
+    \toprule
+    \textbf{状态} & \textbf{动作} & \textbf{更新前 $\pi$} & \textbf{更新后 $\pi$} & \textbf{变化} \\
+    \midrule
+    $s_1$ & $a_1$ & 0.500 & 0.487 & $-0.013$ \\
+    $s_1$ & $a_2$ & 0.500 & 0.513 & $+0.013$ \\
+    $s_2$ & $a_1$ & 0.500 & 0.487 & $-0.013$ \\
+    $s_2$ & $a_2$ & 0.500 & 0.513 & $+0.013$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\textbf{解释：} 由于 $G_0 = 1 > 0$，动作 $a_2$ 在 $s_1$ 下被强化（概率增加）；$G_1 = 0$，动作 $a_1$ 在 $s_2$ 下既未被强化也未被抑制，但因为概率归一化，它相对被降低。
+
+\begin{notation}
+  实际中通常使用 baseline（如 $V^\pi(s)$）来使权重有正有负，使得学习更稳定。这个例子中没有加入 baseline 是为了演示简单。
+\end{notation}
+
+% ============================================================
+% 第九章：代码实现与实战项目
+% ============================================================
+\section{代码实现与实战项目}\label{sec:code}
+
+\subsection{PyTorch REINFORCE 完整代码}\label{ssec:pytorch-code}
+
+以下是基于 PyTorch 实现的经典 REINFORCE 算法代码，以 Gym 库中的 CartPole-v1 为例进行训练：
+
+\begin{lstlisting}[caption={REINFORCE 算法 PyTorch 实现}, label={lst:reinforce}]
+import gymnasium as gym
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import torch.optim as optim
+from torch.distributions import Categorical
+
+# 1. 定义策略网络 (Policy Network)
+class PolicyNet(nn.Module):
+    def __init__(self, state_dim, action_dim, hidden_dim=128):
+        super(PolicyNet, self).__init__()
+        self.fc1 = nn.Linear(state_dim, hidden_dim)
+        self.fc2 = nn.Linear(hidden_dim, action_dim)
+
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        return F.softmax(self.fc2(x), dim=-1)
+
+# 2. 定义 REINFORCE 算法智能体
+class REINFORCE:
+    def __init__(self, state_dim, action_dim, lr=0.001, gamma=0.99):
+        self.policy_net = PolicyNet(state_dim, action_dim)
+        self.optimizer = optim.Adam(self.policy_net.parameters(), lr=lr)
+        self.gamma = gamma
+        self.log_probs = []
+        self.rewards = []
+
+    def choose_action(self, state):
+        state = torch.from_numpy(state).float().unsqueeze(0)
+        probs = self.policy_net(state)
+        m = Categorical(probs)
+        action = m.sample()
+        self.log_probs.append(m.log_prob(action))
+        return action.item()
+
+    def update(self):
+        discounted_rewards = []
+        G = 0
+        for r in reversed(self.rewards):
+            G = r + self.gamma * G
+            discounted_rewards.insert(0, G)
+        discounted_rewards = torch.tensor(discounted_rewards, dtype=torch.float32)
+        # 标准化（批次级基线减法与方差缩放）
+        if len(discounted_rewards) > 1:
+            discounted_rewards = (discounted_rewards - discounted_rewards.mean()) /
+                                 (discounted_rewards.std() + 1e-9)
+        policy_loss = []
+        for log_prob, G_t in zip(self.log_probs, discounted_rewards):
+            policy_loss.append(-log_prob * G_t)
+        self.optimizer.zero_grad()
+        policy_loss = torch.cat(policy_loss).sum()
+        policy_loss.backward()
+        self.optimizer.step()
+        self.log_probs = []
+        self.rewards = []
+
+def train():
+    env = gym.make('CartPole-v1')
+    state_dim = env.observation_space.shape[0]
+    action_dim = env.action_space.n
+    agent = REINFORCE(state_dim, action_dim, lr=0.001)
+    for episode in range(500):
+        state, _ = env.reset()
+        episode_reward = 0
+        while True:
+            action = agent.choose_action(state)
+            next_state, reward, terminated, truncated, _ = env.step(action)
+            agent.rewards.append(reward)
+            state = next_state
+            episode_reward += reward
+            if terminated or truncated:
+                break
+        agent.update()
+        if (episode + 1) % 20 == 0:
+            print(f"Episode {episode+1:3d} | Reward: {episode_reward:.0f}")
+    env.close()
+
+if __name__ == "__main__":
+    train()
+\end{lstlisting}
+
+\begin{table}[H]
+  \centering
+  \caption{代码核心要点解读}
+  \label{tab:code-key}
+  \begin{tabular}{m{5cm}ll}
+    \toprule
+    \textbf{代码段} & \textbf{说明} \\
+    \midrule
+    \lstinline|Categorical(probs).sample()| & 无偏采样，维持探索能力 \\
+    \midrule
+    \lstinline|for r in reversed(self.rewards)| + \lstinline|G = r + self.gamma * G| & 逆向计算 $G_t$，完美契合因果律 \\
+    \midrule
+    \lstinline|(discounted_rewards - mean) / (std + 1e-9)| & 批次级基线标准化，大幅降低方差 \\
+    \midrule
+    \lstinline|-log_prob * G_t| & 损失函数，梯度上升方向（即最小化负方向） \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{推荐实战项目作业}\label{ssec:assignments}
+
+\subsubsection{作业 1：车杆平衡升级版——引入连续动作控制（入门）}
+
+\textbf{项目环境：} Gym 中的 Pendulum-v1 或 MountainCarContinuous-v0。
+
+\textbf{作业目标：} 将上面的离散 REINFORCE 代码改造成连续动作空间版本。
+
+\textbf{核心挑战：}
+\begin{enumerate}
+  \setlength{\itemsep}{0.2em}
+  \item 修改 PolicyNet 的输出，使其不再输出 Softmax 概率，而是输出高斯分布的均值 $\mu$ 和标准差 $\sigma$
+  \item 利用 PyTorch 的 \lstinline|torch.distributions.Normal| 代替 \lstinline|Categorical| 进行动作采样和对数概率计算
+\end{enumerate}
+
+\textbf{意义：} 亲手体会神经网络如何通过``改变高斯分布的形状''来控制连续动作。
+
+\subsubsection{作业 2：经典街机小游戏——像素输入下的 Pong（进阶）}
+
+\textbf{项目环境：} Gym 中的 Pong-v4。
+
+\textbf{作业目标：} 智能体通过观察游戏界面的像素画面（图像输入），学习如何控制挡板击球。
+
+\textbf{核心挑战：}
+\begin{enumerate}
+  \setlength{\itemsep}{0.2em}
+  \item \textbf{高维输入}：策略网络的前端需要从全连接层（FC）换成卷积神经网络（CNN）来提取图像特征
+  \item \textbf{稀疏奖励}：球漏掉了扣 1 分，接住并赢了得 1 分，绝大多数时候奖励是 0
+\end{enumerate}
+
+\textbf{意义：} 这是 RL 历史上最经典的学术里程碑项目之一，能极大地锻炼调参和处理高维特征的能力。
+
+\subsubsection{作业 3：手写高维连续动作挑战——双足机器人行走（高阶）}
+
+\textbf{项目环境：} Gym 中的 BipedalWalker-v3。
+
+\textbf{作业目标：} 控制一个拥有 $4$ 个连续动作关节（两条腿）的机器人向前行走，跨越障碍，且不能摔倒。
+
+\textbf{核心挑战：}
+\begin{enumerate}
+  \setlength{\itemsep}{0.2em}
+  \item \textbf{高维动作方差爆发}：基本 REINFORCE 算法会因为方差太大而极难收敛
+  \item \textbf{算法升级要求}：需要引入 Actor-Critic 架构，或实现 PPO 限制策略更新步长
+\end{enumerate}
+
+\textbf{意义：} 真正迈入现代工业级强化学习（机器人控制、自动驾驶）的门槛。
+
+\begin{keypoint}[实验建议]
+  调参的两个命门：学习率和奖励的标准化（Normalization）是决定 Policy Gradient 能否成功收敛的两个最关键的命门！
+\end{keypoint}
+
+% ============================================================
+% 第十章：工程实践
+% ============================================================
+\section{工程实践：标准化与调参}\label{sec:practice}
+
+\subsection{批次级基线减法与方差缩放}\label{ssec:batch-normalize}
+
+在 REINFORCE 代码中，有这样一行精妙的标准化操作：
+
+\begin{lstlisting}
+discounted_rewards = (discounted_rewards - discounted_rewards.mean())
+                   / (discounted_rewards.std() + 1e-9)
+\end{lstlisting}
+
+这行代码背后的数学操作，被称为 \textbf{``批次级基线减法与方差缩放''}（Batch-level Baseline Subtraction and Variance Scaling）。
+
+\subsubsection{减去均值：动态基线的物理引入}
+
+代码中的均值 \lstinline|mean()| 在统计学上，就是当前策略在这些状态下的``平均预期收益''，充当了状态价值 $V(s)$ 的一个\textbf{经验估计值}。
+
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item 如果 $G_t > \text{mean()}$：相减后结果为正，算法精准\textbf{强化}该动作
+  \item 如果 $G_t < \text{mean()}$：相减后结果为负，算法精准\textbf{惩罚}该动作
+\end{itemize}
+
+通过减去均值，把所有的回报拉到了以 $0$ 为中心的对称区间，实现了``好的方向权重为正去强化，坏的方向权重为负去避免''。
+
+\subsubsection{除以标准差：梯度平稳化}
+
+除以标准差（\lstinline|std()|）在统计学上叫\textbf{数据标准化}（Standardization）。它把回报的波动幅度限制在了一个单位方差（Variance = 1）的稳定世界里：
+
+\begin{equation}\label{eq:standardized}
+  G_t^{\text{scaled}} = \frac{G_t - \mu}{\sigma}
+\end{equation}
+
+无论这局游戏最终的总分是 10 分还是 10000 分，经过标准差的缩放后，高出平均水平的动作其权重基本都在 $+1$ 到 $+2$ 之间，低于平均水平的也都在 $-1$ 到 $-2$ 之间。这带来了两个巨大好处：
+
+\begin{enumerate}
+  \setlength{\itemsep}{0.2em}
+  \item \textbf{梯度极其平稳}：神经网络接收到的激活信号和梯度回传大小在整个训练生命周期里是恒定、可控的
+  \item \textbf{免去了为不同环境单独调参的痛苦}：经过标准差一除，在网络眼里全都变成了统一尺度的``标准信号''
+\end{enumerate}
+
+\lstinline|+ 1e-9| 是为了在标准差为 $0$ 时充当一个``安全垫''，确保分母永远不为 $0$，保证代码的鲁棒性。
+
+\subsubsection{举例：动手算一遍}\label{ssec:variance-example}
+
+\textbf{设定场景：} 假设智能体在某个濒死状态 $s$，有两个动作可选：
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item \textbf{动作 A（好动作）}：能挽救局面，多撑 20 步
+  \item \textbf{动作 B（差动作）}：彻底搞砸，只能多撑 2 步
+\end{itemize}
+
+收集到 4 次采样的 $G_t$ 数据：[110, 90, 12, 8]。
+
+\textbf{方案一：不加 Baseline}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item 权重：[110, 90, 12, 8]，均值 $\mu = 55$
+  \item 方差 $\sigma^2 = 2077$
+\end{itemize}
+
+\textbf{方案二：加入 Baseline（减去均值 55）}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item 新权重：[55, 35, $-43$, $-47$]，新均值 $\mu_{\text{new}} = 0$
+  \item 方差 $\sigma_{\text{new}}^2 = 2077$（与方案一相同！）
+\end{itemize}
+
+\begin{keypoint}[注意]
+  仅仅做``减去均值（平移）''的操作，在数学上是绝对无法改变一组数据内部的方差的！
+\end{keypoint}
+
+\textbf{但真正的``降低方差''体现在哪里？}
+
+关键在于：\textbf{不是这批固定回报数值的方差，而是``由于采样不均匀，导致网络在不同批次间更新参数时的梯度方差''减小了！}
+
+假设下一轮训练中，智能体尝试了 3 次全是差动作 B（12, 8, 10），只执行了 1 次好动作 A（110）：
+
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item \textbf{不加 Baseline}：所有权重都是正数 [110, 12, 8, 10]。动作 A 和动作 B 都在被往上拉，梯度方向混乱
+  \item \textbf{加入 Baseline}：均值 = 35，权重变为 [75, $-23$, $-27$, $-25$]。动作 A 的权重是 +75（强化），3 个动作 B 的权重全是负数（打压）
+\end{itemize}
+
+\textbf{这就是 Baseline 降低梯度的``方差''的真正本质}——它通过引入相对好坏，锚定了梯度的更新方向，让算法能够极其平稳地收敛。
+
+\subsection{PG 算法是 On-policy 吗？}\label{ssec:on-policy}
+
+\textbf{原生的策略梯度（如 REINFORCE）是严格的 On-policy（同策略）算法，绝对不能直接用旧数据更新！}
+
+策略梯度的目标函数 $\mathcal{J}(\theta) = \E_{\tau\sim\pi_\theta}[R(\tau)]$ 里，那个期望符号 $\E$ 要求：\textbf{轨迹 $\tau$ 必须是由当前最新参数 $\theta$ 的策略网络产生的。}
+
+要想让 PG 算法变成 Off-policy 并复用旧数据，必须在数学上引入\textbf{重要性采样}（Importance Sampling）。这正是 PPO（Proximal Policy Optimization）算法的核心机理。
+
+\subsection{学习率（Learning Rate）的设置讲究}\label{ssec:lr}
+
+Policy Gradient 对学习率 lr 的敏感度远超 DQN 等 Value-based 算法。
+
+\textbf{为什么不能设太大？（策略瓦解）}
+
+在 PG 中，如果 lr 过大，网络参数发生剧烈跳跃，可能会让策略直接走向极端（例如某个状态下，动作 A 的概率瞬间被拉到 $99.9\%$）。因为它是 On-policy 的，下一轮它就会以 $99.9\%$ 的概率疯狂采集动作 A 的数据。这意味着智能体彻底丧失了探索能力，直接陷入死胡同。这种现象叫做\textbf{策略瓦解}（Policy Collapse）。
+
+\textbf{为什么不能设太小？}
+
+PG 算法本身的方差极大，样本利用率极低。如果 lr 设得太小（比如 $10^{-5}$），模型在海量噪声梯度中会像蜗牛一样爬行。
+
+\textbf{最佳实践：}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item \textbf{标准范围}：通常在 $10^{-4}$ 到 $10^{-3}$ 之间
+  \item \textbf{强烈推荐结合 Adam 优化器}：Adam 的自适应动态调整步长特性非常契合 PG
+  \item \textbf{现代解法}：如果觉得 lr 太难调，建议直接换成 PPO 算法。PPO 内部有裁剪机制，相当于给学习率加上了``安全带''
+\end{itemize}
+
+\subsection{折扣因子（Gamma）的设置讲究}\label{ssec:gamma}
+
+折扣因子 $\gamma \in [0,1]$ 决定了智能体眼光的长远程度。它在数学上引发了强化学习中最经典的 \textbf{``偏差-方差权衡''}（Bias-Variance Trade-off）。
+
+\textbf{当 $\gamma$ 趋近于 1（如 $0.99$）—— 眼光长远}：适用于需要长线布局的任务（如围棋、迷宫）。代价（高方差）：未来的轨迹拉得非常长，后面几十步、上百步环境带来的随机性噪声会全部通过逆向叠加，汇聚到开局的 $G_0$ 中。这会导致 $G_t$ 的方差惊人地爆发。
+
+\textbf{当 $\gamma$ 较小（如 $0.9$）—— 短视近利}：适用于即时反馈强、一击即中的任务（如打地鼠、吃金币）。代价（高偏差）：由于远期的奖励被指数级衰减抹杀了，智能体在数学上被逼成了一个``近视眼''。
+
+\textbf{最佳实践：}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item \textbf{常规默认值}：绝大多数强化学习任务默认 gamma = 0.99
+  \item \textbf{Gamma 课程学习}：在极度困难、动作序列超长的任务中，训练刚开始时设 gamma = 0.9，随着训练推进，逐渐把 gamma 调高到 0.99
+\end{itemize}
+
+% ============================================================
+% 附录
+% ============================================================
+\appendix
+\section{附录}\label{sec:appendix}
+
+\subsection{核心公式汇总}\label{ssec:formulas}
+
+\textbf{轨迹概率：}
+\[
+p(\tau|\theta) = p(s_0) \prod_{t=0}^{T} \pi_\theta(a_t|s_t) P(s_{t+1}|s_t,a_t)
+\]
+
+\textbf{目标函数：}
+\[
+\mathcal{J}(\theta) = \E_{\tau\sim\pi_\theta}[R(\tau)]
+\]
+
+\textbf{策略梯度定理：}
+\[
+\grad_\theta \mathcal{J}(\theta) = \E_{\tau\sim\pi_\theta}\left[
+  \sum_{t=0}^{T} \grad_\theta \log \pi_\theta(a_t|s_t) \cdot G_t
+\right]
+\]
+
+\textbf{REINFORCE 更新：}
+\[
+\Delta\theta = \alpha \sum_{t=0}^{T} \grad_\theta \log \pi_\theta(a_t|s_t) \cdot G_t
+\]
+
+\textbf{带 Baseline 的更新：}
+\[
+\Delta\theta = \alpha \sum_{t=0}^{T} \grad_\theta \log \pi_\theta(a_t|s_t) \cdot (G_t - b(s_t))
+\]
+
+\subsection{符号表}\label{ssec:symbols}
+
+\begin{longtable}{m{4cm}ll}
+  \caption{符号表} \label{tab:symbols} \\
+  \toprule
+  \textbf{符号} & \textbf{含义} \\
+  \midrule
+  \endfirsthead
+  \toprule
+  \textbf{符号} & \textbf{含义} \\
+  \midrule
+  \endhead
+  \bottomrule
+  \endlastfoot
+
+  $\pi_\theta(a|s)$ & 参数化策略，在状态 $s$ 下选择动作 $a$ 的概率 \\
+  $\tau$ & 轨迹（Trajectory），完整的交互序列 \\
+  $G_t$ & 从时间步 $t$ 开始的未来累计折扣奖励 \\
+  $V^\pi(s)$ & 状态值函数，在策略 $\pi$ 下状态 $s$ 的期望累计奖励 \\
+  $Q^\pi(s,a)$ & 状态-动作值函数，在策略 $\pi$ 下状态 $s$ 采取动作 $a$ 的期望累计奖励 \\
+  $A^\pi(s,a)$ & 优势函数，$A^\pi(s,a) = Q^\pi(s,a) - V^\pi(s)$ \\
+  $\delta_t$ & TD-error，$r_t + \gamma V(s_{t+1}) - V(s_t)$ \\
+  $F$ & Fisher 信息矩阵 \\
+  $\grad_\text{nat}\mathcal{J}$ & 自然梯度 \\
+  $\gamma$ & 折扣因子 \\
+  $\sigma$ & 标准差（Standard Deviation） \\
+\end{longtable}
+
+\begin{center}
+  \begin{tabular}{p{15cm}}
+    \hline
+    \textbf{\large 作者信息} \\
+    \textbf{基本信息：} 杨骞玺 - 06年 - 北京理工大学 - 机器人工程专业 \\
+    \textbf{自我介绍：} 一位具身领域的学徒，未来想长期从事具身方向的科研和创业，用机器人替代人类重复的体力劳动。欢迎大家加我vx交朋友，我很丰富，无法简介 ;) \\
+    \textbf{vx：} Y1832800 \\
+    \hline
+  \end{tabular}
+\end{center}
+
+\end{document}

@@ -1,0 +1,167 @@
+\relax 
+\providecommand\hyper@newdestlabel[2]{}
+\providecommand*\HyPL@Entry[1]{}
+\HyPL@Entry{0<</S/D>>}
+\HyPL@Entry{2<</S/D>>}
+\@writefile{toc}{\contentsline {section}{\numberline {1}背景与动机}{1}{section.1}\protected@file@percent }
+\newlabel{sec:bg}{{1}{1}{背景与动机}{section.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.1}从 Value-Based 到 Policy-Based}{1}{subsection.1.1}\protected@file@percent }
+\newlabel{ssec:value-vs-policy}{{1.1}{1}{从 Value-Based 到 Policy-Based}{subsection.1.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {1}{\ignorespaces 强化学习算法分类对比}}{1}{table.1}\protected@file@percent }
+\newlabel{tab:rl-comparison}{{1}{1}{强化学习算法分类对比}{table.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {1.2}策略梯度的核心思想}{1}{subsection.1.2}\protected@file@percent }
+\newlabel{ssec:core-idea}{{1.2}{1}{策略梯度的核心思想}{subsection.1.2}{}}
+\newlabel{eq:pg-update}{{1}{1}{策略梯度的核心思想}{equation.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2}核心定义与符号体系}{1}{section.2}\protected@file@percent }
+\newlabel{sec:def}{{2}{1}{核心定义与符号体系}{section.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}轨迹（Trajectory）的定义}{1}{subsection.2.1}\protected@file@percent }
+\newlabel{ssec:trajectory}{{2.1}{1}{轨迹（Trajectory）的定义}{subsection.2.1}{}}
+\newlabel{eq:tau}{{2}{2}{轨迹（Trajectory）的定义}{equation.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2}轨迹概率分解}{2}{subsection.2.2}\protected@file@percent }
+\newlabel{ssec:prob-decompose}{{2.2}{2}{轨迹概率分解}{subsection.2.2}{}}
+\newlabel{eq:p-tau}{{3}{2}{轨迹概率分解}{equation.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3}目标函数}{2}{subsection.2.3}\protected@file@percent }
+\newlabel{ssec:obj}{{2.3}{2}{目标函数}{subsection.2.3}{}}
+\newlabel{eq:obj}{{4}{2}{目标函数}{equation.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3}梯度推导（逐步）}{2}{section.3}\protected@file@percent }
+\newlabel{sec:gradient-derive}{{3}{2}{梯度推导（逐步）}{section.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.1}第一步：对目标函数求导}{3}{subsection.3.1}\protected@file@percent }
+\newlabel{ssec:step1}{{3.1}{3}{第一步：对目标函数求导}{subsection.3.1}{}}
+\newlabel{eq:grad-int}{{5}{3}{第一步：对目标函数求导}{equation.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2}第二步：对数导数技巧（Likelihood Ratio Trick）}{3}{subsection.3.2}\protected@file@percent }
+\newlabel{ssec:step2}{{3.2}{3}{第二步：对数导数技巧（Likelihood Ratio Trick）}{subsection.3.2}{}}
+\newlabel{eq:log-deriv}{{6}{3}{第二步：对数导数技巧（Likelihood Ratio Trick）}{equation.6}{}}
+\newlabel{eq:grad-after-log}{{7}{3}{第二步：对数导数技巧（Likelihood Ratio Trick）}{equation.7}{}}
+\newlabel{eq:grad-expectation}{{8}{3}{第二步：对数导数技巧（Likelihood Ratio Trick）}{equation.8}{}}
+\newlabel{eq:general-likelihood}{{9}{3}{第二步：对数导数技巧（Likelihood Ratio Trick）}{equation.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.3}第三步：展开 $\log p(\tau |\theta )$}{3}{subsection.3.3}\protected@file@percent }
+\newlabel{ssec:step3}{{3.3}{3}{第三步：展开 $\log p(\tau |\theta )$}{subsection.3.3}{}}
+\newlabel{eq:log-p-tau}{{10}{3}{第三步：展开 $\log p(\tau |\theta )$}{equation.10}{}}
+\newlabel{eq:grad-log-p-tau}{{11}{3}{第三步：展开 $\log p(\tau |\theta )$}{equation.11}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.4}第四步：得到原始梯度公式}{4}{subsection.3.4}\protected@file@percent }
+\newlabel{ssec:step4}{{3.4}{4}{第四步：得到原始梯度公式}{subsection.3.4}{}}
+\newlabel{eq:grad-raw}{{12}{4}{第四步：得到原始梯度公式}{equation.12}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4}因果律与梯度简化}{4}{section.4}\protected@file@percent }
+\newlabel{sec:causality}{{4}{4}{因果律与梯度简化}{section.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1}问题：过去奖励不应影响当前动作}{4}{subsection.4.1}\protected@file@percent }
+\newlabel{ssec:causality-problem}{{4.1}{4}{问题：过去奖励不应影响当前动作}{subsection.4.1}{}}
+\newlabel{eq:causality-zero}{{13}{4}{问题：过去奖励不应影响当前动作}{equation.13}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}严格证明}{4}{subsection.4.2}\protected@file@percent }
+\newlabel{ssec:causality-proof}{{4.2}{4}{严格证明}{subsection.4.2}{}}
+\newlabel{eq:tau-split}{{14}{5}{严格证明}{equation.14}{}}
+\newlabel{eq:total-exp}{{15}{5}{严格证明}{equation.15}{}}
+\newlabel{eq:inner-exp}{{16}{5}{严格证明}{equation.16}{}}
+\newlabel{eq:outer-exp}{{17}{5}{严格证明}{equation.17}{}}
+\newlabel{eq:expand-int}{{18}{5}{严格证明}{equation.18}{}}
+\newlabel{eq:log-restore}{{19}{5}{严格证明}{equation.19}{}}
+\newlabel{eq:move-out}{{20}{5}{严格证明}{equation.20}{}}
+\newlabel{eq:grad-int-switch}{{21}{5}{严格证明}{equation.21}{}}
+\newlabel{eq:pi-integral-1}{{22}{5}{严格证明}{equation.22}{}}
+\newlabel{eq:grad-of-1}{{23}{6}{严格证明}{equation.23}{}}
+\newlabel{eq:final-zero}{{24}{6}{严格证明}{equation.24}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}简化后的梯度公式}{6}{subsection.4.3}\protected@file@percent }
+\newlabel{ssec:simplified}{{4.3}{6}{简化后的梯度公式}{subsection.4.3}{}}
+\newlabel{eq:Gt-def}{{25}{6}{简化后的梯度公式}{equation.25}{}}
+\newlabel{eq:pgt}{{26}{6}{简化后的梯度公式}{equation.26}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}REINFORCE 算法}{6}{section.5}\protected@file@percent }
+\newlabel{sec:reinforce}{{5}{6}{REINFORCE 算法}{section.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1}从公式到算法}{6}{subsection.5.1}\protected@file@percent }
+\newlabel{ssec:reinforce-formula}{{5.1}{6}{从公式到算法}{subsection.5.1}{}}
+\newlabel{eq:mc-approx}{{27}{6}{从公式到算法}{equation.27}{}}
+\newlabel{eq:delta-theta}{{28}{6}{从公式到算法}{equation.28}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.2}完整算法流程（伪代码）}{7}{subsection.5.2}\protected@file@percent }
+\newlabel{ssec:reinforce-pseudocode}{{5.2}{7}{完整算法流程（伪代码）}{subsection.5.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.3}直观理解}{7}{subsection.5.3}\protected@file@percent }
+\newlabel{ssec:reinforce-intuition}{{5.3}{7}{直观理解}{subsection.5.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.4}REINFORCE 的方差问题}{7}{subsection.5.4}\protected@file@percent }
+\newlabel{ssec:reinforce-variance}{{5.4}{7}{REINFORCE 的方差问题}{subsection.5.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}方差减小技术——Baseline}{8}{section.6}\protected@file@percent }
+\newlabel{sec:baseline}{{6}{8}{方差减小技术——Baseline}{section.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.1}全正/全负奖励也能工作的原因}{8}{subsection.6.1}\protected@file@percent }
+\newlabel{ssec:all-positive}{{6.1}{8}{全正/全负奖励也能工作的原因}{subsection.6.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Baseline 的正确性：不影响期望值}{8}{subsection.6.2}\protected@file@percent }
+\newlabel{ssec:baseline-proof}{{6.2}{8}{Baseline 的正确性：不影响期望值}{subsection.6.2}{}}
+\newlabel{eq:grad-with-baseline}{{29}{8}{Baseline 的正确性：不影响期望值}{equation.29}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.3}改进后的梯度估计}{8}{subsection.6.3}\protected@file@percent }
+\newlabel{ssec:baseline-est}{{6.3}{8}{改进后的梯度估计}{subsection.6.3}{}}
+\newlabel{eq:grad-discounted-baseline}{{30}{8}{改进后的梯度估计}{equation.30}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {6.4}为什么 baseline 常用 $V^\pi (s)$ 而不是 $Q^\pi (s,a)$？}{8}{subsection.6.4}\protected@file@percent }
+\newlabel{ssec:v-vs-q}{{6.4}{8}{为什么 baseline 常用 $V^\pi (s)$ 而不是 $Q^\pi (s,a)$？}{subsection.6.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7}连续动作空间的处理}{9}{section.7}\protected@file@percent }
+\newlabel{sec:continuous}{{7}{9}{连续动作空间的处理}{section.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.1}离散 vs 连续的本质区别}{9}{subsection.7.1}\protected@file@percent }
+\newlabel{ssec:discrete-vs-continuous}{{7.1}{9}{离散 vs 连续的本质区别}{subsection.7.1}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {2}{\ignorespaces 离散与连续动作空间的对比}}{9}{table.2}\protected@file@percent }
+\newlabel{tab:cont-comparison}{{2}{9}{离散与连续动作空间的对比}{table.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2}神经网络输出分布参数}{9}{subsection.7.2}\protected@file@percent }
+\newlabel{ssec:gaussian-policy}{{7.2}{9}{神经网络输出分布参数}{subsection.7.2}{}}
+\newlabel{eq:gaussian}{{31}{9}{神经网络输出分布参数}{equation.31}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.3}高斯策略的对数概率梯度}{9}{subsection.7.3}\protected@file@percent }
+\newlabel{ssec:gaussian-grad}{{7.3}{9}{高斯策略的对数概率梯度}{subsection.7.3}{}}
+\newlabel{eq:log-gaussian}{{32}{9}{高斯策略的对数概率梯度}{equation.32}{}}
+\newlabel{eq:grad-log-gaussian}{{33}{10}{高斯策略的对数概率梯度}{equation.33}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.4}为什么不需要遍历无穷动作空间？}{10}{subsection.7.4}\protected@file@percent }
+\newlabel{ssec:sampling}{{7.4}{10}{为什么不需要遍历无穷动作空间？}{subsection.7.4}{}}
+\newlabel{eq:expectation-sampling}{{34}{10}{为什么不需要遍历无穷动作空间？}{equation.34}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {8}数值小例子}{10}{section.8}\protected@file@percent }
+\newlabel{sec:numerical}{{8}{10}{数值小例子}{section.8}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.1}环境设定}{10}{subsection.8.1}\protected@file@percent }
+\newlabel{ssec:env}{{8.1}{10}{环境设定}{subsection.8.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.2}初始策略参数}{11}{subsection.8.2}\protected@file@percent }
+\newlabel{ssec:init}{{8.2}{11}{初始策略参数}{subsection.8.2}{}}
+\newlabel{eq:softmax}{{35}{11}{初始策略参数}{equation.35}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.3}单条轨迹采样}{11}{subsection.8.3}\protected@file@percent }
+\newlabel{ssec:sampled-trajectory}{{8.3}{11}{单条轨迹采样}{subsection.8.3}{}}
+\newlabel{eq:tau-sample}{{36}{11}{单条轨迹采样}{equation.36}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.4}梯度计算逐项展开}{11}{subsection.8.4}\protected@file@percent }
+\newlabel{ssec:gradient-compute}{{8.4}{11}{梯度计算逐项展开}{subsection.8.4}{}}
+\newlabel{eq:pg-sample}{{37}{11}{梯度计算逐项展开}{equation.37}{}}
+\newlabel{eq:grad-softmax}{{38}{11}{梯度计算逐项展开}{equation.38}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.5}参数更新}{12}{subsection.8.5}\protected@file@percent }
+\newlabel{ssec:param-update}{{8.5}{12}{参数更新}{subsection.8.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {8.6}更新前后策略对比}{12}{subsection.8.6}\protected@file@percent }
+\newlabel{ssec:compare}{{8.6}{12}{更新前后策略对比}{subsection.8.6}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3}{\ignorespaces 更新前后策略概率对比}}{12}{table.3}\protected@file@percent }
+\newlabel{tab:compare}{{3}{12}{更新前后策略概率对比}{table.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {9}代码实现与实战项目}{12}{section.9}\protected@file@percent }
+\newlabel{sec:code}{{9}{12}{代码实现与实战项目}{section.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.1}PyTorch REINFORCE 完整代码}{12}{subsection.9.1}\protected@file@percent }
+\newlabel{ssec:pytorch-code}{{9.1}{12}{PyTorch REINFORCE 完整代码}{subsection.9.1}{}}
+\newlabel{lst:reinforce}{{1}{13}{REINFORCE 算法 PyTorch 实现}{lstlisting.1}{}}
+\@writefile{lol}{\contentsline {lstlisting}{\numberline {1}REINFORCE 算法 PyTorch 实现}{13}{lstlisting.1}\protected@file@percent }
+\@writefile{lot}{\contentsline {table}{\numberline {4}{\ignorespaces 代码核心要点解读}}{15}{table.4}\protected@file@percent }
+\newlabel{tab:code-key}{{4}{15}{代码核心要点解读}{table.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {9.2}推荐实战项目作业}{15}{subsection.9.2}\protected@file@percent }
+\newlabel{ssec:assignments}{{9.2}{15}{推荐实战项目作业}{subsection.9.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {9.2.1}作业 1：车杆平衡升级版——引入连续动作控制（入门）}{15}{subsubsection.9.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {9.2.2}作业 2：经典街机小游戏——像素输入下的 Pong（进阶）}{15}{subsubsection.9.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {9.2.3}作业 3：手写高维连续动作挑战——双足机器人行走（高阶）}{15}{subsubsection.9.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {10}工程实践：标准化与调参}{16}{section.10}\protected@file@percent }
+\newlabel{sec:practice}{{10}{16}{工程实践：标准化与调参}{section.10}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.1}批次级基线减法与方差缩放}{16}{subsection.10.1}\protected@file@percent }
+\newlabel{ssec:batch-normalize}{{10.1}{16}{批次级基线减法与方差缩放}{subsection.10.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {10.1.1}减去均值：动态基线的物理引入}{16}{subsubsection.10.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {10.1.2}除以标准差：梯度平稳化}{16}{subsubsection.10.1.2}\protected@file@percent }
+\newlabel{eq:standardized}{{39}{16}{除以标准差：梯度平稳化}{equation.39}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {10.1.3}举例：动手算一遍}{17}{subsubsection.10.1.3}\protected@file@percent }
+\newlabel{ssec:variance-example}{{10.1.3}{17}{举例：动手算一遍}{subsubsection.10.1.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.2}PG 算法是 On-policy 吗？}{17}{subsection.10.2}\protected@file@percent }
+\newlabel{ssec:on-policy}{{10.2}{17}{PG 算法是 On-policy 吗？}{subsection.10.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.3}学习率（Learning Rate）的设置讲究}{18}{subsection.10.3}\protected@file@percent }
+\newlabel{ssec:lr}{{10.3}{18}{学习率（Learning Rate）的设置讲究}{subsection.10.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {10.4}折扣因子（Gamma）的设置讲究}{18}{subsection.10.4}\protected@file@percent }
+\newlabel{ssec:gamma}{{10.4}{18}{折扣因子（Gamma）的设置讲究}{subsection.10.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A}附录}{18}{appendix.A}\protected@file@percent }
+\newlabel{sec:appendix}{{A}{18}{附录}{appendix.A}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1}核心公式汇总}{18}{subsection.A.1}\protected@file@percent }
+\newlabel{ssec:formulas}{{A.1}{18}{核心公式汇总}{subsection.A.1}{}}
+\gdef \LT@i {\LT@entry 
+    {1}{125.81102pt}\LT@entry 
+    {4}{352.79454pt}\LT@entry 
+    {1}{0.0pt}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2}符号表}{19}{subsection.A.2}\protected@file@percent }
+\newlabel{ssec:symbols}{{A.2}{19}{符号表}{subsection.A.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{符号表}}{19}{table.5}\protected@file@percent }
+\newlabel{tab:symbols}{{5}{19}{符号表}{table.5}{}}
+\ttl@finishall
+\gdef \@abspage@last{21}
