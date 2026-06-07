@@ -1,0 +1,67 @@
+\contentsline {section}{\numberline {1}背景与动机}{1}{section.1}%
+\contentsline {subsection}{\numberline {1.1}从 Policy Gradient 到 PPO}{1}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}PPO 的设计目标}{1}{subsection.1.2}%
+\contentsline {section}{\numberline {2}标准策略梯度基础}{1}{section.2}%
+\contentsline {subsection}{\numberline {2.1}目标函数}{1}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}策略梯度定理}{1}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}伪目标函数}{2}{subsection.2.3}%
+\contentsline {section}{\numberline {3}通过重要性采样的离策略学习}{2}{section.3}%
+\contentsline {subsection}{\numberline {3.1}离策略学习的必要性}{2}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}重要性采样恒等式}{2}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}概率比}{2}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}保守策略迭代 (CPI) 目标}{3}{subsection.3.4}%
+\contentsline {section}{\numberline {4}破坏性更新的危险}{3}{section.4}%
+\contentsline {subsection}{\numberline {4.1}为什么无约束的 $L_{CPI}$ 是危险的}{3}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}一阶（线性）近似陷阱}{3}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}TRPO 的解决方案：硬 KL 约束}{3}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}Fisher Information Matrix 噩梦}{4}{subsection.4.4}%
+\contentsline {subsection}{\numberline {4.5}PPO 的巧妙解决方案}{4}{subsection.4.5}%
+\contentsline {section}{\numberline {5}PPO 裁剪代理目标}{4}{section.5}%
+\contentsline {subsection}{\numberline {5.1}裁剪区间}{4}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}裁剪代理目标定义}{4}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}案例分析：裁剪机制如何工作}{4}{subsection.5.3}%
+\contentsline {subsubsection}{\numberline {5.3.1}Case 1: 正优势 ($\hat {A}_t > 0$)}{5}{subsubsection.5.3.1}%
+\contentsline {subsubsection}{\numberline {5.3.2}Case 2: 负优势 ($\hat {A}_t < 0$)}{5}{subsubsection.5.3.2}%
+\contentsline {subsection}{\numberline {5.4}紧急制动机制}{5}{subsection.5.4}%
+\contentsline {subsection}{\numberline {5.5}数学总结：裁剪如何迫使梯度为零}{6}{subsection.5.5}%
+\contentsline {section}{\numberline {6}完整 PPO 目标函数}{6}{section.6}%
+\contentsline {subsection}{\numberline {6.1}带价值函数和熵奖励的完整目标}{6}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}组件 1：裁剪代理目标 $L_{CLIP}$}{6}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}组件 2：价值函数损失 $L^{VF}$}{7}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}组件 3：熵奖励 $S[\pi _\theta ]$}{7}{subsection.6.4}%
+\contentsline {section}{\numberline {7}优势估计}{7}{section.7}%
+\contentsline {subsection}{\numberline {7.1}[Mni+16] 风格：截断 horizon}{7}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}截断估计器（公式 10）}{7}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}广义优势估计 (GAE)}{8}{subsection.7.3}%
+\contentsline {subsection}{\numberline {7.4}从第一性原理推导 GAE}{8}{subsection.7.4}%
+\contentsline {subsection}{\numberline {7.5}通过 $\lambda $ 的偏差-方差权衡}{9}{subsection.7.5}%
+\contentsline {section}{\numberline {8}理解 PPO 目标曲线}{9}{section.8}%
+\contentsline {subsection}{\numberline {8.1}沿策略更新方向的插值}{9}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}阅读图表：曲线逐条}{9}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}为什么红线下降？（"下界"直觉）}{10}{subsection.8.3}%
+\contentsline {subsection}{\numberline {8.4}终极启示}{10}{subsection.8.4}%
+\contentsline {section}{\numberline {9}PPO 中的 On-Policy 与 Off-Policy}{10}{section.9}%
+\contentsline {subsection}{\numberline {9.1}澄清命名法}{10}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}数学期望约束}{11}{subsection.9.2}%
+\contentsline {subsection}{\numberline {9.3}为什么标准 PG 在重用数据上失败}{11}{subsection.9.3}%
+\contentsline {subsection}{\numberline {9.4}PPO 如何克服这个（重要性采样）}{11}{subsection.9.4}%
+\contentsline {subsection}{\numberline {9.5}解决你关于不准确优势函数的观点}{11}{subsection.9.5}%
+\contentsline {section}{\numberline {10}PPO 算法流程}{12}{section.10}%
+\contentsline {subsection}{\numberline {10.1}解码优化指令}{12}{subsection.10.1}%
+\contentsline {subsection}{\numberline {10.2}实际逐步流程}{12}{subsection.10.2}%
+\contentsline {subsection}{\numberline {10.3}裁剪如何限制更新的微积分}{13}{subsection.10.3}%
+\contentsline {section}{\numberline {11}完整 PPO 实现}{14}{section.11}%
+\contentsline {subsection}{\numberline {11.1}PyTorch 实现与详细注释}{14}{subsection.11.1}%
+\contentsline {subsection}{\numberline {11.2}超参数含义}{18}{subsection.11.2}%
+\contentsline {section}{\numberline {12}实践项目推荐}{19}{section.12}%
+\contentsline {subsection}{\numberline {12.1}项目 1：LunarLander-v3（离散控制）}{19}{subsection.12.1}%
+\contentsline {subsection}{\numberline {12.2}项目 2：BipedalWalker-v3（连续控制过渡）}{19}{subsection.12.2}%
+\contentsline {subsection}{\numberline {12.3}项目 3：Atari Pong（基于视觉的 RL）}{19}{subsection.12.3}%
+\contentsline {subsection}{\numberline {12.4}项目 4：自定义交易环境}{19}{subsection.12.4}%
+\contentsline {section}{\numberline {13}附录 A：数学工具}{20}{section.13}%
+\contentsline {subsection}{\numberline {13.1}随机梯度下降 (SGD)}{20}{subsection.13.1}%
+\contentsline {subsection}{\numberline {13.2}nn.Tanh() 激活函数}{20}{subsection.13.2}%
+\contentsline {section}{\numberline {14}附录 B：符号表}{21}{section.14}%
+\contentsline {section}{\numberline {15}参考文献}{22}{section.15}%
+\contentsline {section}{\numberline {16}作者信息}{22}{section.16}%
+\contentsfinish 

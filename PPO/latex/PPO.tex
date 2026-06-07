@@ -1,0 +1,1493 @@
+% !TEX program = xelatex
+% !TEX encoding = UTF-8
+
+\documentclass[12pt,a4paper]{article}
+
+% ============================================================
+% 基础宏包配置
+% ============================================================
+\usepackage{xeCJK}
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\setsansfont{Arial}
+\setmonofont{Consolas}
+
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{mathtools}
+\usepackage{latexsym}
+\usepackage{enumitem}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{diagbox}
+\usepackage{longtable}
+\usepackage{geometry}
+\geometry{left=2.5cm,right=2.5cm,top=3cm,bottom=3cm,headheight=1.5cm}
+
+\usepackage{titlesec}
+\usepackage{titletoc}
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[C]{\fontsize{10}{12}\selectfont Proximal Policy Optimization 算法详解笔记}
+\fancyfoot[C]{\thepage}
+\fancyfoot[R]{\fontsize{9}{11}\selectfont Reinforcement Learning}
+\usepackage{footnote}
+
+% ============================================================
+% 颜色定义
+% ============================================================
+\usepackage{xcolor}
+\definecolor{deepblue}{RGB}{41,77,155}
+\definecolor{lightblue}{RGB}{70,130,180}
+\definecolor{accentorange}{RGB}{210,105,30}
+\definecolor{softgreen}{RGB}{60,179,113}
+\definecolor{darkgray}{RGB}{60,60,60}
+\definecolor{lightgray}{RGB}{240,240,240}
+\definecolor{lightyellow}{RGB}{255,255,230}
+\definecolor{codegreen}{RGB}{46,139,87}
+\definecolor{codegray}{RGB}{128,128,128}
+\definecolor{authorred}{RGB}{160, 70, 75}
+
+% ============================================================
+% 自定义命令
+% ============================================================
+\newcommand{\mb}[1]{\mathbf{#1}}
+\newcommand{\bs}[1]{\boldsymbol{#1}}
+\newcommand{\E}{\mathbb{E}}
+\DeclareMathOperator{\Var}{Var}
+\DeclareMathOperator{\Cov}{Cov}
+\DeclareMathOperator{\KL}{KL}
+\DeclareMathOperator{\softmax}{softmax}
+
+% 梯度相关
+\newcommand{\grad}{\nabla}
+\newcommand{\gradtheta}{\grad_{\theta}}
+
+% 常用期望/概率符号
+\newcommand{\ptheta}{p_{\theta}}
+
+% ============================================================
+% 定理环境设置
+% ============================================================
+\usepackage{amsthm}
+\newtheoremstyle{noteplain}%
+  {3pt}%
+  {3pt}%
+  {\itshape}%
+  {0pt}%
+  {\bfseries\color{deepblue}}%
+  {---}%
+  {3pt plus 2pt minus 1pt}%
+  {\thmname{#1}\thmnumber{ #2}\thmnote{ (#3)}}
+
+\newtheoremstyle{noteexercise}%
+  {3pt}%
+  {3pt}%
+  {\upshape}%
+  {0pt}%
+  {\sffamily\bfseries\color{accentorange}}%
+  {---}%
+  {3pt plus 2pt minus 1pt}%
+  {\thmname{#1}\thmnumber{ #2}\thmnote{ (#3)}}
+
+\theoremstyle{noteplain}
+\newtheorem{notation}{注}[section]
+\newtheorem{important}{重要结论}[section]
+
+\theoremstyle{noteexercise}
+\newtheorem{exercise}{思考}[section]
+
+% ============================================================
+% 表格样式
+% ============================================================
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage[colwidth=auto]{colortbl}
+
+% ============================================================
+% 代码高亮设置
+% ============================================================
+\usepackage{listings}
+\lstdefinestyle{mypy}{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  commentstyle=\color{codegray}\itshape,
+  keywordstyle=\color{blue}\bfseries,
+  stringstyle=\color{codegreen},
+  numberstyle=\color{codegray},
+  frame=lines,
+  backgroundcolor=\color{lightgray},
+  lineskip=-0.5pt,
+  tabsize=4,
+  breaklines=true,
+  captionpos=b,
+  numbers=left,
+  stepnumber=1,
+  numbersep=8pt,
+  xleftmargin=2em,
+  framexleftmargin=2em,
+  framexrightmargin=0em,
+  framextopmargin=0em,
+  framexbottommargin=0em,
+  showspaces=false,
+  showstringspaces=false,
+}
+
+\lstdefinestyle{mytex}{
+  language=[LaTeX]TeX,
+  basicstyle=\ttfamily\small,
+  commentstyle=\color{codegray}\itshape,
+  keywordstyle=\color{blue}\bfseries,
+  stringstyle=\color{codegreen},
+  numberstyle=\color{codegray},
+  frame=lines,
+  backgroundcolor=\color{lightgray},
+  lineskip=-0.5pt,
+  tabsize=4,
+  breaklines=true,
+  captionpos=b,
+  numbers=left,
+  stepnumber=1,
+  numbersep=8pt,
+  xleftmargin=2em,
+  framexleftmargin=2em,
+  framexrightmargin=0em,
+  framextopmargin=0em,
+  framexbottommargin=0em,
+  showspaces=false,
+  showstringspaces=false,
+}
+
+\lstset{style=mypy}
+
+% ============================================================
+% TikZ 图形支持
+% ============================================================
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,calc,shapes.geometric,decorations.pathreplacing}
+
+% ============================================================
+% 页面装饰：顶部装饰线
+% ============================================================
+\usepackage{eso-pic}
+\AddToShipoutPicture{%
+  \AtPageUpperLeft{%
+    \hspace{\paperwidth-7cm}\color{deepblue}%
+    \rule[-8pt]{7cm}{3pt}%
+  }%
+}
+
+% ============================================================
+% 引用块设计
+% ============================================================
+\usepackage{tcolorbox}
+\tcbuselibrary{xparse,skins,hooks}
+\newtcolorbox{keypoint}[1][]{
+  colback=lightyellow!50!white,
+  colframe=accentorange!60!black,
+  fonttitle=\sffamily\bfseries\color{accentorange},
+  title=#1,
+  parbox=false,
+  boxrule=1pt,
+  top=6pt,
+  bottom=6pt,
+  left=6pt,
+  right=6pt,
+  arc=4pt,
+  outer arc=4pt,
+  before skip=10pt,
+  after skip=6pt,
+}
+
+\newtcolorbox{summarybox}[1][]{
+  colback=lightblue!15!white,
+  colframe=deepblue!80!black,
+  fonttitle=\sffamily\bfseries\color{white},
+  title=#1,
+  parbox=false,
+  boxrule=1pt,
+  top=6pt,
+  bottom=6pt,
+  left=6pt,
+  right=6pt,
+  arc=4pt,
+  outer arc=4pt,
+  before skip=10pt,
+  after skip=6pt,
+}
+
+\newtcolorbox{darkbox}[1][]{
+  colback=darkgray!95!white,
+  colframe=lightblue!80!white,
+  fonttitle=\sffamily\bfseries\color{white},
+  title=#1,
+  coltext=white,
+  parbox=false,
+  boxrule=0.5pt,
+  top=6pt,
+  bottom=6pt,
+  left=8pt,
+  right=8pt,
+  arc=4pt,
+  outer arc=4pt,
+  before skip=10pt,
+  after skip=6pt,
+}
+
+% ============================================================
+% hyperref 设置（放在最后）
+% ============================================================
+\usepackage[
+  colorlinks=true,
+  linkcolor=deepblue,
+  urlcolor=lightblue,
+  citecolor=accentorange,
+  pdftitle={Proximal Policy Optimization 算法详解笔记},
+  pdfauthor={千喜Qx},
+  pdfsubject={Reinforcement Learning},
+  bookmarksnumbered=true,
+  bookmarksopen=true,
+]{hyperref}
+
+% ============================================================
+% 章节标题格式设置
+% ============================================================
+\usepackage{sectsty}
+\sectionfont{\Large\bfseries\color{deepblue}}
+\subsectionfont{\large\bfseries\color{deepblue!80!black}}
+\subsubsectionfont{\normalsize\bfseries\color{deepblue!70!black}}
+
+% ============================================================
+% 目录定制
+% ============================================================
+\contentsmargin{0.5cm}
+\titlecontents{section}[1.2em]
+  {\addvspace{3pt}\large\bfseries\color{deepblue}}
+  {\contentslabel[\quad\thecontentslabel]{2.5em}}
+  {}
+  {\titlerule*[1pc]{.}\contentspage}
+
+% ============================================================
+% 文章标题
+% ============================================================
+\begin{document}
+
+% ============================================================
+% 封面
+% ============================================================
+\thispagestyle{empty}
+
+\vspace*{1cm}
+
+\begin{center}
+  \parbox{0.9\textwidth}{
+    \centering
+    \rule[6pt]{0.9\textwidth}{2pt}
+    \vspace{0.3cm}
+    {\LARGE\bfseries\color{deepblue} Proximal Policy Optimization \\[0.4em] 算法详解笔记}
+    \vspace{0.3cm}
+    \rule[6pt]{0.9\textwidth}{2pt}
+  }
+\end{center}
+
+\vspace{0.8cm}
+
+\begin{center}
+  \begin{minipage}{0.7\textwidth}
+    \centering
+    \large\rmfamily\color{authorred}
+    千喜 Qx \\[0.6em]
+    \normalsize\rmfamily\color{darkgray} 2026/06/07 \\[0.4em]
+    \normalsize\rmfamily\color{lightblue} \href{https://github.com/X2024-AI/reinforcement-learning-notes_Qx}{GitHub Repository:\\github.com/X2024-AI/reinforcement-learning-notes\_Qx}
+  \end{minipage}
+\end{center}
+
+\vspace{1cm}
+
+\tableofcontents
+
+\newpage
+\pagenumbering{arabic}
+\pagestyle{fancy}
+
+% ============================================================
+% Chapter 1: Background and Motivation
+% ============================================================
+\section{背景与动机}\label{sec:bg}
+
+\subsection{从 Policy Gradient 到 PPO}
+
+Proximal Policy Optimization (PPO) 代表了强化学习算法的重大进步。要理解其动机，我们必须首先研究现有策略优化方法的格局。
+
+传统的策略梯度方法（如 REINFORCE）虽然简单优雅，但存在一个关键缺陷：它们是\textbf{on-policy}算法，这意味着每次更新策略参数时都必须丢弃所有收集的数据。这导致极低的样本效率。
+
+另一方面，Trust Region Policy Optimization (TRPO) 引入了一种使用 KL 散度约束策略更新的数学严格方法。然而，TRPO 需要计算\textbf{Fisher Information Matrix}（KL 散度的二阶导数），对于大型神经网络来说计算量巨大。
+
+\textbf{PPO 取得了平衡：}它保留了 TRPO 约束优化的数学安全性，同时实现了标准策略梯度方法的计算简单性。
+
+\subsection{PPO 的设计目标}
+
+PPO 的核心创新是\textbf{裁剪代理目标函数}。与 TRPO 使用硬 KL 约束不同，PPO 修改目标函数本身来惩罚偏离旧策略过远的策略更新。这种裁剪机制在计算上微不足道，同时有效地防止了破坏性的策略更新。
+
+% ============================================================
+% Chapter 2: Standard Policy Gradient Foundation
+% ============================================================
+\section{标准策略梯度基础}\label{sec:pg-foundation}
+
+\subsection{目标函数}
+
+在强化学习中，我们的根本目标是最大化策略 $\pi_\theta$下的期望累计奖励。期望回报定义为：
+
+\begin{equation}\label{eq:expected-return}
+  J(\theta) = E_{\tau \sim \pi_\theta}[R(\tau)]
+\end{equation}
+
+其中：
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item $\tau = (s_0, a_0, r_1, s_1, a_1, r_2, \ldots)$：轨迹（状态和动作的序列）
+  \item $R(\tau) = \sum_{t=0}^{T} r_t$：轨迹的总奖励
+  \item $\pi_\theta$：由神经网络权重 $\theta$ 参数化的策略
+\end{itemize}
+
+\subsection{策略梯度定理}
+
+使用似然比技巧，我们可以在不计算环境动力学梯度的情况下推导目标函数的梯度：
+
+\begin{equation}\label{eq:pg-theorem}
+  \nabla_\theta J(\theta) = E_{\tau \sim \pi_\theta}\left[\left(\sum_{t=0}^{T} \nabla_\theta \log \pi_\theta(a_t|s_t)\right) R(\tau)\right]
+\end{equation}
+
+通过仔细应用\textbf{因果原则}（时间 $t$ 之前的奖励不影响时间 $t$ 的梯度），这简化为：
+
+\begin{equation}\label{eq:pg-simplified}
+  \nabla_\theta J(\theta) = \hat{E}_t\left[\nabla_\theta \log \pi_\theta(a_t|s_t) \hat{A}_t\right]
+\end{equation}
+
+其中 $\hat{A}_t$ 是时间步 $t$ 的估计\textbf{优势函数}。
+
+\textbf{符号定义：}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item $\hat{E}_t[\cdot]$：时间步的经验平均（近似期望）
+  \item $\nabla_\theta \log \pi_\theta(a_t|s_t)$：在状态 $s_t$ 下选择动作 $a_t$ 的对数概率梯度
+  \item $\hat{A}_t$：优势估计，衡量一个动作相比该状态的平均行为好多少
+\end{itemize}
+
+\subsection{伪目标函数}
+
+相应的伪目标函数（通过梯度上升最大化）为：
+
+\begin{equation}\label{eq:l-pg}
+  L_{PG}(\theta) = \hat{E}_t\left[\log \pi_\theta(a_t|s_t) \hat{A}_t\right]
+\end{equation}
+
+这是 PPO 构建的基础。
+
+% ============================================================
+% Chapter 3: Off-Policy via Importance Sampling
+% ============================================================
+\section{通过重要性采样的离策略学习}\label{sec:is}
+
+\subsection{离策略学习的必要性}
+
+标准策略梯度方法是\textbf{on-policy}的：每次更新 $\theta$ 时，我们必须丢弃采样轨迹并采集新轨迹。这极大了样本效率。
+
+为了提高数据效率，我们希望使用由旧策略 $\pi_{\theta_{old}}$ 收集的数据来优化新策略 $\pi_\theta$。
+
+\subsection{重要性采样恒等式}
+
+我们使用\textbf{重要性采样}来实现这一点，这是一种将一个分布下的期望重写为另一个分布下期望的数学恒等式：
+
+\begin{equation}\label{eq:is-identity}
+  E_{x \sim p}[f(x)] = \int p(x) f(x) \, dx = \int q(x) \frac{p(x)}{q(x)} f(x) \, dx = E_{x \sim q}\left[\frac{p(x)}{q(x)} f(x)\right]
+\end{equation}
+
+\textbf{关键洞察：}分布 $p$下的期望可以使用来自分布 $q$ 的样本计算，通过重要性权重 $\frac{p(x)}{q(x)}$ 来修正分布不匹配。
+
+\subsection{概率比}
+
+将此应用于我们的策略目标，我们定义\textbf{概率比} $r_t(\theta)$：
+
+\begin{equation}\label{eq:prob-ratio}
+  r_t(\theta) = \frac{\pi_{\theta_{old}}(a_t|s_t)}{\pi_\theta(a_t|s_t)}
+\end{equation}
+
+\textbf{重要观察：}如果 $\theta = \theta_{old}$，则 $r_t(\theta) = 1$。
+
+\subsection{保守策略迭代 (CPI) 目标}
+
+用这个比率替换标准对数梯度得到保守策略迭代目标：
+
+\begin{equation}\label{eq:l-cpi}
+  L_{CPI}(\theta) = \hat{E}_t\left[\frac{\pi_{\theta_{old}}(a_t|s_t)}{\pi_\theta(a_t|s_t)} \hat{A}_t\right] = \hat{E}_t\left[r_t(\theta) \hat{A}_t\right]
+\end{equation}
+
+\textbf{符号定义：}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item $\pi_{\theta_{old}}(a_t|s_t)$：在状态 $s_t$ 下由\textbf{旧}（行为）策略选择动作 $a_t$ 的概率
+  \item $\pi_\theta(a_t|s_t)$：\textbf{新}（目标）策略下的概率
+  \item $r_t(\theta)$：衡量新策略相比旧策略选择 $a_t$ 的可能性倍数
+\end{itemize}
+
+% ============================================================
+% Chapter 4: The Danger of Destructive Updates
+% ============================================================
+\section{破坏性更新的危险}\label{sec:danger}
+
+\subsection{为什么无约束的 $L_{CPI}$ 是危险的}
+
+无约束地最大化 $L_{CPI}(\theta)$ 是非常危险的。因为 $L_{CPI}$ 只是真目标在 $\theta_{old}$ 附近的一阶（线性）近似，巨大的梯度步长可能导致 $r_t(\theta)$ 飙升或暴跌。这迫使策略进入无法恢复的状态，性能崩溃。
+
+\subsection{一阶（线性）近似陷阱}
+
+在机器学习中，真目标函数（在所有可能的神经网络权重上策略的实际好坏）是一个高度复杂的蜿蜒山脉。
+
+当算法进行一阶近似时，它：
+\begin{enumerate}
+  \setlength{\itemsep}{0.2em}
+  \item 在单一精确坐标 ($\theta_{old}$) 处观察山脉
+  \item 计算斜率（一阶导数/梯度）
+  \item 画一条\textbf{完全直的正切线}
+\end{enumerate}
+
+\textbf{局部（小额步长）：}直线非常准确。沿直线移动 0.001 个单位，你基本上仍在山上。
+
+\textbf{全局（巨额步长）：}直线完全脱离现实。如果山脉突然变成陡峭的下行悬崖，直线不在乎——它继续指向天空。
+
+对于好动作 ($\hat{A}_t > 0$)，线性近似告诉网络："你越朝这个方向移动，奖励越高，无限！"优化器盲目信任这条线并迈出巨额步长，迫使 $r_t(\theta)$ 飙升至无穷大。
+
+相反，对于坏动作 ($\hat{A}_t < 0$)，这条线告诉它使概率比降至零，完全破坏策略分布。
+
+\subsection{TRPO 的解决方案：硬 KL 约束}
+
+TRPO 认识到这种危险，并引入\textbf{硬数学约束}使用 KL 散度确保 $\pi_\theta$ 保持在 $\pi_{\theta_{old}}$ 附近：
+
+\begin{equation}\label{eq:trpo-constraint}
+  \theta_{max} \quad \hat{E}_t\left[r_t(\theta) \hat{A}_t\right] \quad \text{subject to} \quad \hat{E}_t\left[KL(\pi_{\theta_{old}}(\cdot|s_t) \| \pi_\theta(\cdot|s_t))\right] \leq \delta
+\end{equation}
+
+\textbf{符号定义：}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item $KL(\pi_{\theta_{old}} \| \pi_\theta)$：衡量策略分布变化的 KL 散度
+  \item $\delta$：最大允许 KL 散度（"信任区域"半径）
+\end{itemize}
+
+\subsection{Fisher Information Matrix 噩梦}
+
+\textbf{为什么 TRPO 计算量巨大：}
+
+"信任区域"的形状不是完美的圆——它是一个高度扭曲的多维椭球。在某些权重方向上，微小变化会完全改变策略；在其他方向上，你可以大幅度改变权重而不改变行为。
+
+为了绘制这个安全区域的确切轮廓，TRPO 必须计算 KL 散度梯度如何随权重变化。梯度的导数是\textbf{二阶导数}（称为\textbf{Hessian} 的偏二阶导数矩阵）。
+
+当应用于概率分布时，这个特定的二阶导数矩阵被称为\textbf{Fisher Information Matrix (FIM)}。
+
+\textbf{计算规模：}
+
+假设你的神经网络包含 $P = 1{,}000{,}000$ 个参数（权重和偏置）。FIM 是一个大小为 $P \times P$ 的方阵，包含 1 万亿个元素。存储这需要大约\textbf{4 TB 的显存}。
+
+要进行更新步骤，TRPO 必须计算这个矩阵的逆 ($F^{-1}$)，这在计算上是毁灭性的。
+
+\subsection{PPO 的巧妙解决方案}
+
+PPO 看到了这个计算噩梦，说："与其花费巨大的计算能力构建一个完美的 4 TB 安全室矩阵（TRPO），不如使用我们廉价的线性近似，但添加一个\textbf{简单的裁剪函数}来切断试图走太远的梯度。"
+
+% ============================================================
+% Chapter 5: PPO Clipped Surrogate Objective
+% ============================================================
+\section{PPO 裁剪代理目标}\label{sec:clip}
+
+\subsection{裁剪区间}
+
+PPO 不是在策略空间上强制硬约束，而是强制概率比 $r_t(\theta)$ 保持在 1 附近的区间内，通常是：
+
+\begin{equation}\label{eq:clip-interval}
+  [1 - \epsilon, 1 + \epsilon]
+\end{equation}
+
+其中 $\epsilon \approx 0.2$ 是一个超参数。
+
+\subsection{裁剪代理目标定义}
+
+\textbf{PPO 裁剪代理目标}定义为：
+
+\begin{equation}\label{eq:l-clip}
+  L_{CLIP}(\theta) = \hat{E}_t\left[\min\left(r_t(\theta)\hat{A}_t, \text{clip}\left(r_t(\theta), 1-\epsilon, 1+\epsilon\right)\hat{A}_t\right)\right]
+\end{equation}
+
+\textbf{符号定义：}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item $\text{clip}(r_t(\theta), 1-\epsilon, 1+\epsilon)$：将 $r_t(\theta)$ 裁剪到区间 $[1-\epsilon, 1+\epsilon]$
+  \item $\min(\cdot, \cdot)$：取未裁剪和裁剪目标的最小值
+\end{itemize}
+
+\subsection{案例分析：裁剪机制如何工作}
+
+为了理解为什么 $\min$ 和 $\text{clip}$ 算子有效，我们必须根据动作是否产生正向或负向结果来检查它们的行为。
+
+\subsubsection{Case 1: 正优势 ($\hat{A}_t > 0$)}
+
+采取的动作获得了超出预期的回报。我们想修改 $\theta$ 使这个动作更可能，这将驱动 $r_t(\theta)$\textbf{高于 1}。
+
+\textbf{子情况 1a：当 $r_t(\theta) \leq 1+\epsilon$}
+
+裁剪函数不触发。目标简化为：
+
+\begin{equation}\label{eq:clip-case1a}
+  L_{CLIP}(\theta) = r_t(\theta) \hat{A}_t
+\end{equation}
+
+梯度是活跃的，网络学习增加这个好动作的概率。
+
+\textbf{子情况 1b：当 $r_t(\theta) > 1+\epsilon$}
+
+裁剪项锁定在 $(1+\epsilon)\hat{A}_t$。因为 $\hat{A}_t > 0$：
+
+\begin{equation}\label{eq:clip-case1b}
+  r_t(\theta)\hat{A}_t > (1+\epsilon)\hat{A}_t
+\end{equation}
+
+$\min(\cdot)$ 算子选择\textbf{较小}的值：$(1+\epsilon)\hat{A}_t$。
+
+\textbf{直觉：}一旦策略使动作比之前可能性高出 $1+\epsilon$ 倍，梯度降至零。这防止算法在单个好轨迹上过度优化。
+
+\subsubsection{Case 2: 负优势 ($\hat{A}_t < 0$)}
+
+采取的动作获得了低于预期的回报。我们想修改 $\theta$ 使这个动作不太可能，这将驱动 $r_t(\theta)$\textbf{低于 1}。
+
+\textbf{子情况 2a：当 $r_t(\theta) \geq 1-\epsilon$}
+
+裁剪函数不触发。目标是 $r_t(\theta) \hat{A}_t$。
+
+\textbf{子情况 2b：当 $r_t(\theta) < 1-\epsilon$}
+
+裁剪项锁定在 $(1-\epsilon)\hat{A}_t$。因为 $\hat{A}_t < 0$，乘以一个较小的数得到一个\textbf{较大（较小负）}的值：
+
+$$0.5 \times (-2) = -1.0 \quad \text{而} \quad 0.8 \times (-2) = -1.6$$
+
+$\min(-1.0, -1.6)$ 算子选择\textbf{较小（较负）}的值：$(1-\epsilon)\hat{A}_t$。
+
+\textbf{直觉：}当 $r_t(\theta)$ 低于 $1-\epsilon$ 时，目标变平，意味着智能体不会因为使坏动作更不可能而获得无限赞扬。
+
+\subsection{紧急制动机制}
+
+\textbf{如果策略犯了可怕的错误怎么办？}
+
+如果动作是坏的 ($\hat{A}_t < 0$) 但策略更新意外地使其更可能 ($r_t(\theta) \gg1$)：
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item 裁剪项变为 $(1+\epsilon)\hat{A}_t$（一个大负数）
+  \item 未裁剪项 $r_t(\theta)\hat{A}_t$ 变成一个\textbf{巨大的负数}
+  \item $\min(\cdot)$ 算子选择未裁剪的值
+\end{itemize}
+
+这充当\textbf{未裁剪的紧急制动}，允许强大的负梯度将策略有力地拉回。
+
+\subsection{数学总结：裁剪如何迫使梯度为零}
+
+理解裁剪如何限制更新，我们检查反向传播期间梯度发生了什么。
+
+\textbf{回想核心优化更新步骤：}
+
+\begin{equation}\label{eq:update-step}
+  \theta_{new} = \theta_{old} + \eta \nabla_\theta L_{CLIP}(\theta)
+\end{equation}
+
+如果 $\nabla_\theta L_{CLIP}(\theta) = 0$，则 $\theta_{new} = \theta_{old}$，意味着网络\textbf{完全停止学习}该数据点。
+
+\textbf{当 $r_t(\theta) > 1+\epsilon$ 时：}
+
+\begin{equation}\label{eq:clipped-constant}
+  L_{CLIP}(\theta) = (1+\epsilon) \hat{A}_t
+\end{equation}
+
+仔细看这个项。$\epsilon$ 是一个常数（如 0.2），$\hat{A}_t$ 已在数据收集期间计算和冻结。\textbf{这个项中没有 $\theta$ 残留。}它是一个平的常数。
+
+因此：
+
+\begin{equation}\label{eq:grad-zero}
+  \nabla_\theta L_{CLIP}(\theta) = \nabla_\theta [\text{constant}] = 0
+\end{equation}
+
+\textbf{总结：}裁剪机制不是物理上阻塞权重；它\textbf{使损失景观变平}。当策略偏离太远时，通过将目标函数变成平坦高原，它剥夺了优化器的梯度。没有梯度，优化器无法计算移动方向，有效地锁定策略。
+
+% ============================================================
+% Chapter 6: The Full PPO Objective Function
+% ============================================================
+\section{完整 PPO 目标函数}\label{sec:full-obj}
+
+\subsection{带价值函数和熵奖励的完整目标}
+
+当使用深度神经网络实现 PPO 时，策略网络（Actor）和价值网络（Critic）通常共享早期层。为了同时优化两者同时防止提前收敛，最终 PPO 损失函数结合了三个组件：
+
+\begin{equation}\label{eq:l-full}
+  L^{CLIP+V_F+S}(\theta) = \hat{E}_t\left[L_{CLIP}^t(\theta) - c_1 L_t^{VF}(\theta) + c_2 S[\pi_\theta](s_t)\right]
+\end{equation}
+
+其中：
+
+\begin{equation}\label{eq:l-vf}
+  L_t^{VF}(\theta) = \left(V_\theta(s_t) - V_{targ}^t\right)^2
+\end{equation}
+
+\textbf{符号定义：}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item $L_{CLIP}^t(\theta)$：时间 $t$ 的裁剪代理目标
+  \item $L_t^{VF}(\theta)$：\textbf{价值函数损失}——预测值 $V_\theta(s_t)$ 与目标值 $V_{targ}^t$ 之间的均方误差
+  \item $S[\pi_\theta](s_t)$：状态 $s_t$ 处策略熵，衡量策略的随机性
+  \item $c_1$：价值函数损失系数（通常为 0.5）
+  \item $c_2$：熵奖励系数（通常为 0.01）
+\end{itemize}
+
+\subsection{组件 1：裁剪代理目标 $L_{CLIP}$}
+
+如第~\ref{sec:clip} 章所推导的，这是防止破坏性策略更新的核心 PPO 目标：
+
+\begin{equation}\label{eq:l-clip-ref}
+  L_{CLIP}(\theta) = \hat{E}_t\left[\min\left(r_t(\theta)\hat{A}_t, \text{clip}\left(r_t(\theta), 1-\epsilon, 1+\epsilon\right)\hat{A}_t\right)\right]
+\end{equation}
+
+\subsection{组件 2：价值函数损失 $L^{VF}$}
+
+价值函数损失迫使 Critic 准确预测状态值：
+
+\begin{equation}\label{eq:l-vf-detail}
+  L_t^{VF}(\theta) = \left(V_\theta(s_t) - V_{targ}^t\right)^2 = \left(V_\theta(s_t) - \hat{R}_t\right)^2
+\end{equation}
+
+\textbf{重要性：}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item Critic 网络 $V_\theta(s)$ 估计从状态 $s$ 开始的期望累计奖励
+  \item $V_{targ}^t$ 是目标值（通常使用 GAE 或 n 步回报计算）
+  \item 最小化这个 MSE 损失提高优势估计的准确性
+  \item 更好的优势估计带来更稳定和高效的学习
+\end{itemize}
+
+\subsection{组件 3：熵奖励 $S[\pi_\theta]$}
+
+熵衡量策略分布的\textbf{随机性}或\textbf{不确定性}：
+
+\begin{equation}\label{eq:entropy}
+  S[\pi_\theta](s) = - \sum_a \pi_\theta(a|s) \log \pi_\theta(a|s)
+\end{equation}
+
+对于具有 softmax 策略的离散动作空间，这是动作概率分布的香农熵。
+
+\textbf{熵奖励的作用：}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item \textbf{鼓励探索}：确定性策略（所有概率在一个动作上）的熵为零。添加熵奖励防止策略过早崩溃
+  \item \textbf{防止提前收敛}：没有熵奖励，策略可能过早锁定在次优确定性策略上
+  \item \textbf{系数 $c_2$}：控制探索强度。太 高 = 随机行为；太 低 = 提前收敛
+\end{itemize}
+
+\textbf{重要说明：}熵奖励在损失函数中被减去，意味着我们\textbf{最大化}熵同时最大化裁剪目标。这通过添加 $-c_2 \times S$（负熵）到损失来实现，等价于最小化 $c_2 \times (-S)$。
+
+% ============================================================
+% Chapter 7: Advantage Estimation
+% ============================================================
+\section{优势估计}\label{sec:gae}
+
+\subsection{[Mni+16] 风格：截断 horizon}
+
+一种策略梯度实现风格，在 [Mni+16]（Mnih et al. 2016 A3C 论文）中流行，非常适合与\textbf{循环神经网络}一起使用，运行策略 $T$ 个时间步（其中 $T$ 远小于回合长度），并使用收集的样本进行更新。
+
+这种风格需要不超出时间步 $T$ 的优势估计器。
+
+\subsection{截断估计器（公式 10）}
+
+[Mni+16] 使用的估计器是：
+
+\begin{equation}\label{eq:truncated-adv}
+  \hat{A}_t = -V(s_t) + r_t + \gamma r_{t+1} + \cdots + \gamma^{T-t+1} r_{T-1} + \gamma^{T-t} V(s_T)
+\end{equation}
+
+其中 $t$ 指定在给定长度-$T$ 轨迹段内的时间索引 $[0, T]$。
+
+\textbf{符号定义：}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item $V(s_t)$：截断段开始处的价值估计
+  \item $r_t, r_{t+1}, \ldots, r_{T-1}$：截断窗口内的观测奖励
+  \item $\gamma^{T-t} V(s_T)$：截断段末尾的 bootstrap 值
+  \item $V(s_t)$ 前的负号修正起始值（基线减法）
+\end{itemize}
+
+\textbf{直觉：}这个估计器正好向前看 $T-t$ 步（加上末尾的 bootstrap 值），使其适用于 RNN 中截断 BPTT（通过时间的反向传播）。
+
+\subsection{广义优势估计 (GAE)}
+
+推广截断选择，我们可以使用\textbf{截断广义优势估计}版本，当 $\lambda = 1$ 时简化为公式 (10)：
+
+\begin{equation}\label{eq:gae}
+  \hat{A}_t = \delta_t + (\gamma\lambda)\delta_{t+1} + \cdots + (\gamma\lambda)^{T-t+1}\delta_{T-1}
+\end{equation}
+
+其中\textbf{TD 误差} $\delta_t$ 定义为：
+
+\begin{equation}\label{eq:td-error}
+  \delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)
+\end{equation}
+
+\textbf{符号定义：}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item $\delta_t$：时间 $t$ 的 TD 误差（价值估计偏离了多少）
+  \item $\gamma$：折扣因子
+  \item $\lambda$：GAE 平滑参数（平衡偏差和方差）
+  \item $V(s_{t+1})$：下一状态的价值估计
+\end{itemize}
+
+\subsection{从第一性原理推导 GAE}
+
+GAE 公式表示 $n$ 步 TD 误差的指数加权移动平均：
+
+\begin{equation}\label{eq:gae-sum}
+  \hat{A}_t = \sum_{n=0}^{T-t-1} (\gamma\lambda)^n \delta_{t+n}
+\end{equation}
+
+让我们验证当 $\lambda = 1$ 时这简化为公式 (10)：
+
+\begin{equation}\label{eq:gae-lambda-1}
+  \hat{A}_t = \delta_t + \gamma\delta_{t+1} + \gamma^2\delta_{t+2} + \cdots + \gamma^{T-t-1}\delta_{T-1}
+\end{equation}
+
+展开每个 $\delta$：
+
+$$\delta_t = r_t + \gamma V(s_{t+1}) - V(s_t)$$
+$$\delta_{t+1} = r_{t+1} + \gamma V(s_{t+2}) - V(s_{t+1})$$
+$$\vdots$$
+
+经过代数消去的望远镜求和后，这简化为正是公式 (10)。
+
+\subsection{通过 $\lambda$ 的偏差-方差权衡}
+
+GAE\_LAMBDA ($\lambda$) 是平衡\textbf{两个 evil} 的调谐旋钮：
+
+\textbf{极端 1：$\lambda = 0$（高偏差，低方差）}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item 算法只向前看一步
+  \item 严重依赖 Critic 网络的价值估计
+  \item 训练初期，当 Critic 无知时，这导致系统性偏差
+\end{itemize}
+
+\textbf{极端 2：$\lambda = 1$（低偏差，高方差）}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item 算法一直看到回合结束（蒙特卡洛回报）
+  \item 不依赖价值估计（无偏）
+  \item 然而，随机环境导致方差在长 horizon 上指数级复合
+\end{itemize}
+
+\textbf{最佳点：$\lambda = 0.95$}
+
+通过设置 GAE\_LAMBDA $= 0.95$，我们取所有多步向前看的指数加权平均：
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item 严重倾向于向前看远方（低偏差）
+  \item 应用温和的折扣因子来抑制后期步骤的混乱噪声（可控方差）
+\end{itemize}
+
+数十年的经验 RL 研究表明，**0.95** 是平衡这种权衡的几乎通用最优选择。
+
+% ============================================================
+% Chapter 8: Understanding the PPO Objective Curve
+% ============================================================
+\section{理解 PPO 目标曲线}\label{sec:curve}
+
+\subsection{沿策略更新方向的插值}
+
+神经网络权重生活在具有数千或数百万维的空间中，使可视化整个损失景观成为不可能。为了解决这个问题，研究人员通过该巨大空间取一个单一的\textbf{1D "切片"}。
+
+设 $\theta_{old}$ 为起始权重，$\theta_{new}$ 为 PPO 提出的目标权重。"方向"是连接它们的直线：
+
+\begin{equation}\label{eq:interpolation}
+  \theta(\alpha) = \theta_{old} + \alpha(\theta_{new} - \theta_{old})
+\end{equation}
+
+\textbf{阅读 x 轴（线性插值因子 $\alpha$）：}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item 在 $\alpha = 0$：恰好站在 $\theta_{old}$（在进行任何更新之前）
+  \item 在 $\alpha = 1$：恰好站在 $\theta_{new}$（PPO 决定采取的实际步长）
+  \item 在 $\alpha > 1$：故意超调看看会发生什么
+\end{itemize}
+
+\subsection{阅读图表：曲线逐条}
+
+该图显示当我们将 $\alpha$ 上下调节时，四个不同数学指标如何变化。
+
+\textbf{橙线 ($L_{CPI}$)：危险的乐观主义者}
+
+这是标准的未裁剪策略梯度目标 ($r_t \hat{A}_t$)。注意当我们推过 $\alpha = 1$ 时，橙线继续飙升向上。
+
+\textbf{问题：}如果你使用标准策略梯度，优化器会说"哇，向右走产生巨大奖励！让我们大步迈向 $\alpha = 5$ 或 $\alpha = 10$！"这导致破坏性策略更新。
+
+\textbf{蓝线 ($\hat{E}_t[KL_t]$)：隐藏的悬崖}
+
+这追踪 KL 散度（策略实际行为变化了多少）。注意它在 $\alpha = 0$ 处是平的，但随着 $\alpha$ 增加曲线\textbf{剧烈向上}。
+
+\textbf{问题：}这显示了橙线盲目看不到的危险。如果优化器盲目跟随橙线向右走，策略变化如此剧烈以至于性能将完全崩溃。
+
+\textbf{绿线（仅裁剪项）}
+
+这显示隔离裁剪 piece 的行为：$\text{clip}(r_t, 1-\epsilon, 1+\epsilon) \hat{A}_t$。当你向右走时，它完全\textbf{变平}，一旦走太远就剥夺优化器的任何梯度。
+
+\textbf{红线 ($L_{CLIP}$)：PPO 的杰作}
+
+这是实际的 PPO 目标函数，取橙线和绿线的\textbf{最小值}。注意其美丽的形状：
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item 在 0 和 1 之间，它向上爬升，允许模型高效学习
+  \item 它几乎恰好在 $\alpha = 1$ 处达到峰值
+  \item 一旦你超调超过 1，红线开始\textbf{迅速下降}
+\end{itemize}
+
+\subsection{为什么红线下降？（"下界"直觉）}
+
+PPO 的 $L_{CLIP}$ 是 $L_{CPI}$ 的\textbf{下界}，对过大的策略更新进行惩罚。
+
+\textbf{为什么它下降而不是保持平坦？}
+
+PPO 的一次迭代计算整个批次数据上的平均（期望 $\hat{E}_t$），包含数百个不同的状态-动作对。
+
+对于好动作 ($\hat{A}_t > 0$)，超调使它们变平（跟随绿线）。
+
+但对于坏动作 ($\hat{A}_t < 0$)，过大步长可能意外地使那些坏动作\textbf{更可能}。对于那些特定的坏转换，未裁剪项 ($r_t \hat{A}_t$) 变成一个\textbf{巨大的负数}。
+
+因为 PPO 公式使用 $\min(\cdot)$ 算子，它迫使目标忽略好动作的平坦绿线，而是关注坏动作的\textbf{巨大负惩罚}。这将整个平均（红线）向下拖。
+
+\subsection{终极启示}
+
+\textbf{PPO 的数学有效地重塑了损失景观。}它将危险的盲目陡峭山峰（橙线）变成安全、定义良好的峰值（红线），迫使你的深度学习优化器\textbf{恰好在完美步长} ($\alpha = 1$) 处停止，此时更新是安全的。
+
+% ============================================================
+% Chapter 9: On-Policy vs Off-Policy in PPO
+% ============================================================
+\section{PPO 中的 On-Policy 与 Off-Policy}\label{sec:onoff}
+
+\subsection{澄清命名法}
+
+\textbf{严格来说，PPO 是一个 on-policy 算法。}在 RL 中，如果算法可以将经验存储在回放缓冲区中并重用由数百上千步前的旧策略收集的数据，则是 off-policy（如 DQN 或 SAC）。PPO 不能做到这一点。如果你尝试用完全不同训练会话的数据喂养 PPO，算法会失败。
+
+然而，PPO 通常被描述为具有\textbf{off-policy 特性}，因为它是\textbf{局部 off-policy}。它使用一个策略收集一批数据，冻结该策略，然后重用相同的数据更新权重\textbf{K 个 epoch}。
+
+\subsection{数学期望约束}
+
+你关于"更新后不准确"的直觉非常接近真相，但这不是关于总奖励 ($G_t$) 或优势 ($\hat{A}_t$) 的准确性。这是关于概率的基本规则：**数学期望约束**。
+
+仔细看标准策略梯度目标函数：
+
+\begin{equation}\label{eq:pg-expectation}
+  L_{PG}(\theta) = E_{(s_t, a_t) \sim \pi_\theta}\left[\log \pi_\theta(a_t|s_t) \hat{A}_t\right]
+\end{equation}
+
+注意期望下的下标：$(s_t, a_t) \sim \pi_\theta$。这意味着这个方程\textbf{数学上仅在}数据池中的状态和动作直接来自你当前优化的\textbf{确切策略} $\pi_\theta$ 时才有效。
+
+\subsection{为什么标准 PG 在重用数据上失败}
+
+分解如下：
+
+\begin{enumerate}
+  \setlength{\itemsep}{0.2em}
+  \item 你使用当前策略权重 $\theta_0$ 收集数据
+  \item 你运行一步梯度上升。你的权重从 $\theta_0 \rightarrow \theta_1$ 变化
+  \item 你现在有一个新策略 $\pi_{\theta_1}$
+  \item 如果你尝试使用相同的数据进行第二步梯度下降，你正在用来自 $\pi_{\theta_0}$ 的数据评估 $L_{PG}(\theta_1)$
+  \item 因为 $\pi_{\theta_1} \neq \pi_{\theta_0}$，\textbf{数学期望崩溃}。梯度指向根本错误的方向，导致策略破坏性地过拟合于它不再代表的分布
+\end{enumerate}
+
+\subsection{PPO 如何克服这个（重要性采样）}
+
+PPO 使用\textbf{重要性采样}绕过这个期望约束。这是一种数学恒等式，允许你使用从分布 $Q$ 采样的数据计算分布 $P$ 下的期望。
+
+PPO 不是优化标准对数损失，而是优化一个比率：
+
+\begin{equation}\label{eq:ratio-is}
+  r_t(\theta) = \frac{\pi_{\theta_{old}}(a_t|s_t)}{\pi_\theta(a_t|s_t)}
+\end{equation}
+
+目标函数变为：
+
+\begin{equation}\label{eq:l-cpi-is}
+  L_{CPI}(\theta) = E_{(s_t, a_t) \sim \pi_{\theta_{old}}}\left[\frac{\pi_{\theta_{old}}(a_t|s_t)}{\pi_\theta(a_t|s_t)} \hat{A}_t\right]
+\end{equation}
+
+注意现在的下标：数据允许来自 $\pi_{\theta_{old}}$。
+
+当 PPO 运行 K 个 epoch 时，$\pi_{\theta_{old}}$ 保持完全冻结。当 $\theta$ 在那些 K 个 epoch 上更新和变化时，比率 $r_t(\theta)$\textbf{数学上修正了数据略微陈旧的事实}。它缩放梯度上下以补偿分布偏移。
+
+\subsection{解决你关于不准确优势函数的观点}
+
+\textbf{统计噪声}（不准确的优势函数）和\textbf{系统性数学错误}（违反期望约束）之间有巨大差异。
+
+\begin{enumerate}
+  \setlength{\itemsep}{0.2em}
+  \item \textbf{训练开始时的不准确优势（统计噪声）：}Critic 网络是新而且预测能力差，所以 $\hat{A}_t$ 高度不准确和有噪声。然而，在深度学习中，神经网络非常擅长过滤零均值随机噪声如果你喂养它们足够多的数据。只要梯度平均指向正确方向，模型将学习
+  \item \textbf{违反期望约束（系统性错误）：}如果你在不进行重要性采样的情况下在标准策略梯度中重用数据，你不仅仅是处理有噪声的数据——你正在给优化器喂一个\textbf{数学上欺诈的梯度}。优化器认为它正在计算当前策略景观的斜率，但实际上它正在计算来自旧策略的扭曲斜率。这种系统性偏差迅速将策略网络推下悬崖
+\end{enumerate}
+
+% ============================================================
+% Chapter 10: PPO Algorithm Procedure
+% ============================================================
+\section{PPO 算法流程}\label{sec:procedure}
+
+\subsection{解码优化指令}
+
+短语\textbf{"Optimize surrogate $L$ wrt $\theta$, with $K$ epochs and minibatch size $M \leq NT$"}只是数据回收管道的紧凑机器学习速记。
+
+\begin{table}[H]
+  \centering
+  \caption{PPO 变量定义}
+  \label{tab:ppo-vars}
+  \begin{tabular}{>{\centering\arraybackslash}m{2cm}
+                 >{\centering\arraybackslash}m{3cm}
+                 >{\centering\arraybackslash}m{6cm}}
+    \toprule
+    \textbf{变量} & \textbf{是什么} & \textbf{实际含义} \\
+    \midrule
+    $N$ & 并行环境数 & 同时运行以收集数据的游戏/模拟实例数 \\
+    \midrule
+    $T$ & 时间步数 & 每个环境在暂停更新网络前收集的体验步数 \\
+    \midrule
+    $NT$ & 总数据池 &收集的完整体验批次（$N \times T$ 总转换数）\\
+    \midrule
+    $M$ & 小批次大小 & 从 $NT$ 采样用于计算单次梯度步长的较小数据块 \\
+    \midrule
+    $K$ & Epoch 数 & 在丢弃之前算法循环遍历整个 $NT$ 数据池的次数 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{实际逐步流程}
+
+与标准策略梯度不同（收集数据、更新一次、立即丢弃），PPO 执行以下操作：
+
+\textbf{步骤 1：收集数据}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item 智能体在 $N$ 个环境中播放 $T$ 步
+  \item 累积 $NT$ 个总数据点的大池：状态、动作、奖励、价值、对数概率、done标志
+\end{itemize}
+
+\textbf{步骤 2：冻结旧策略}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item 将当前策略权重保存为 $\pi_{\theta_{old}}$
+  \item 这用于计算比率 $r_t(\theta)$ 的分母
+\end{itemize}
+
+\textbf{步骤 3：Epoch 循环（运行 K 次）}
+
+对于每个 epoch：
+\begin{enumerate}
+  \setlength{\itemsep}{0.2em}
+  \item 洗牌整个 $NT$ 数据点池
+  \item 将数据池切分成大小为 $M$ 的较小小批次
+  \item 对于每个小批次：
+    \begin{itemize}
+      \setlength{\itemsep}{0.2em}
+      \item 计算 PPO 损失 ($L_{CLIP}$)
+      \item 使用优化器（如 Adam 或 SGD）计算梯度并更新实际网络权重 $\theta$
+    \end{itemize}
+\end{enumerate}
+
+\textbf{步骤 4：丢弃并重复}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item 在对数据进行 $K$ 次完整遍历后，丢弃 $NT$ 数据
+  \item 用更新后的策略从步骤 1 重复
+\end{itemize}
+
+\subsection{裁剪如何限制更新的微积分}
+
+理解裁剪如何精确限制更新，我们检查反向传播期间梯度发生了什么。
+
+\textbf{回想核心优化更新步骤：}
+
+\begin{equation}\label{eq:update-step-2}
+  \theta_{new} = \theta_{old} + \eta \nabla_\theta L_{CLIP}(\theta)
+\end{equation}
+
+如果 $\nabla_\theta L_{CLIP}(\theta) = 0$，则 $\theta_{new} = \theta_{old}$，意味着网络\textbf{完全停止学习}该数据点。
+
+\textbf{区域 1：正常区域（无裁剪）}
+
+当新策略与旧策略相比没有太大变化时，比率接近1 ($1-\epsilon < r_t(\theta) < 1+\epsilon$)。$\min$ 算子选择未裁剪目标：
+
+\begin{equation}\label{eq:normal-zone}
+  L_{CLIP}(\theta) = r_t(\theta) \hat{A}_t = \frac{\pi_{\theta_{old}}(a_t|s_t)}{\pi_\theta(a_t|s_t)} \hat{A}_t
+\end{equation}
+
+当我们取关于网络权重 $\theta$ 的导数时，梯度是\textbf{活跃的}并驱动权重更新。
+
+\textbf{区域 2：裁剪区域（更新"制动"）}
+
+现在想象网络更新其权重，在下一个 epoch 中遇到完全相同的数据点。策略变化如此之大，以至于现在非常可能选择那个动作。比率超过阈值：$r_t(\theta) > 1+\epsilon$。
+
+此时，$\min$ 算子触发并迫使目标函数选择裁剪版本：
+
+\begin{equation}\label{eq:clipped-zone}
+  L_{CLIP}(\theta) = (1+\epsilon) \hat{A}_t
+\end{equation}
+
+仔细看这个项。$\epsilon$ 是一个常数（如 0.2），$\hat{A}_t$ 已在数据收集期间计算和冻结。\textbf{这个项中没有 $\theta$ 残留。}它是一个平的常数。
+
+当我们尝试计算梯度时：
+
+\begin{equation}\label{eq:grad-zero-2}
+  \nabla_\theta L_{CLIP}(\theta) = \nabla_\theta [\text{constant}] = 0
+\end{equation}
+
+因为梯度降至\textbf{恰好零}，SGD 更新公式计算为：
+
+$$\theta \leftarrow \theta + \eta(0) = \theta$$
+
+网络\textbf{停止学习}该数据点。
+
+% ============================================================
+% Chapter 11: Complete PPO Implementation
+% ============================================================
+\section{完整 PPO 实现}\label{sec:code}
+
+\subsection{PyTorch 实现与详细注释}
+
+\lstdefinestyle{mypy}{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  commentstyle=\color{codegray}\itshape,
+  keywordstyle=\color{blue}\bfseries,
+  stringstyle=\color{codegreen},
+  numberstyle=\color{codegray},
+  frame=lines,
+  backgroundcolor=\color{lightgray},
+  lineskip=-0.5pt,
+  tabsize=4,
+  breaklines=true,
+  captionpos=b,
+  numbers=left,
+  stepnumber=1,
+  numbersep=8pt,
+  xleftmargin=2em,
+  framexleftmargin=2em,
+  framexrightmargin=0em,
+  framextopmargin=0em,
+  framexbottommargin=0em,
+  showspaces=false,
+  showstringspaces=false,
+}
+
+\begin{lstlisting}[caption={PPO 算法 PyTorch 实现}, label={lst:ppo}]
+import gymnasium as gym
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torch.distributions.categorical import Categorical
+
+# Hyperparameters
+ENV_NAME = "CartPole-v1"
+LEARNING_RATE = 3e-4
+TOTAL_TIMESTEPS = 100000
+TRAIN_COEFFICIENTS = {"value": 0.5, "entropy": 0.01}
+
+# PPO Specific Hyperparameters
+ROLLOUT_STEPS = 2048      # N * T (Total data pool size per iteration)
+MINIBATCH_SIZE = 64       # M
+PPO_EPOCHS = 10           # K
+CLIP_EPSILON = 0.2        # epsilon
+GAMMA = 0.99              # Discount factor
+GAE_LAMBDA = 0.95         # Smoothing factor for GAE
+
+class ActorNetwork(nn.Module):
+    def __init__(self, state_dim, action_dim):
+        super(ActorNetwork, self).__init__()
+        self.network = nn.Sequential(
+            nn.Linear(state_dim, 64),
+            nn.Tanh(),
+            nn.Linear(64, 64),
+            nn.Tanh(),
+            nn.Linear(64, action_dim)
+        )
+        
+    def get_action_distribution(self, state):
+        logits = self.network(state)
+        return Categorical(logits=logits)
+
+class CriticNetwork(nn.Module):
+    def __init__(self, state_dim):
+        super(CriticNetwork, self).__init__()
+        self.network = nn.Sequential(
+            nn.Linear(state_dim, 64),
+            nn.Tanh(),
+            nn.Linear(64, 64),
+            nn.Tanh(),
+            nn.Linear(64, 1)
+        )
+        
+    def forward(self, state):
+        return self.network(state)
+
+class PPOAgent:
+    def __init__(self, state_dim, action_dim):
+        self.actor = ActorNetwork(state_dim, action_dim)
+        self.critic = CriticNetwork(state_dim)
+        
+        self.actor_optimizer = optim.Adam(self.actor.parameters(), lr=LEARNING_RATE)
+        self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=LEARNING_RATE)
+
+    def train_step(self, states, actions, old_log_probs, returns, advantages):
+        # Convert data to PyTorch tensors
+        states = torch.tensor(np.array(states), dtype=torch.float32)
+        actions = torch.tensor(np.array(actions), dtype=torch.long)
+        old_log_probs = torch.tensor(np.array(old_log_probs), dtype=torch.float32)
+        returns = torch.tensor(np.array(returns), dtype=torch.float32).unsqueeze(1)
+        advantages = torch.tensor(np.array(advantages), dtype=torch.float32)
+        
+        # Normalize advantages for training stability
+        advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
+        
+        dataset_size = len(states)
+        
+        # K Epochs Loop
+        for _ in range(PPO_EPOCHS):
+            permutation = torch.randperm(dataset_size)
+            
+            # Minibatch Loop
+            for start_idx in range(0, dataset_size, MINIBATCH_SIZE):
+                batch_indices = permutation[start_idx:start_idx + MINIBATCH_SIZE]
+                
+                b_states = states[batch_indices]
+                b_actions = actions[batch_indices]
+                b_old_log_probs = old_log_probs[batch_indices]
+                b_returns = returns[batch_indices]
+                b_advantages = advantages[batch_indices]
+                
+                # Actor Loss Calculation
+                dist = self.actor.get_action_distribution(b_states)
+                new_log_probs = dist.log_prob(b_actions)
+                entropy = dist.entropy().mean()
+                
+                # Probability Ratio r_t(theta)
+                ratios = torch.exp(new_log_probs - b_old_log_probs)
+                
+                # Clipped Surrogate Objective
+                surr1 = ratios * b_advantages
+                surr2 = torch.clamp(ratios, 1.0 - CLIP_EPSILON, 1.0 + CLIP_EPSILON) * b_advantages
+                actor_loss = -torch.min(surr1, surr2).mean()
+                
+                # Critic Loss Calculation (MSE)
+                state_values = self.critic(b_states)
+                critic_loss = nn.MSELoss()(state_values, b_returns)
+                
+                # Total Objective Optimization
+                self.actor_optimizer.zero_grad()
+                actor_total_loss = actor_loss - TRAIN_COEFFICIENTS["entropy"] * entropy
+                actor_total_loss.backward()
+                self.actor_optimizer.step()
+                
+                self.critic_optimizer.zero_grad()
+                critic_total_loss = TRAIN_COEFFICIENTS["value"] * critic_loss
+                critic_total_loss.backward()
+                self.critic_optimizer.step()
+
+def main():
+    env = gym.make(ENV_NAME)
+    state_dim = env.observation_space.shape[0]
+    action_dim = env.action_space.n
+    
+    agent = PPOAgent(state_dim, action_dim)
+    
+    state, _ = env.reset()
+    global_step = 0
+    episode_rewards = []
+    current_episode_reward = 0
+    
+    while global_step < TOTAL_TIMESTEPS:
+        # 1. Storage buffers for Rollout Data Pool (N * T)
+        b_states, b_actions, b_log_probs, b_rewards, b_dones, b_values = [], [], [], [], [], []
+        
+        # 2. Data Collection Phase
+        for _ in range(ROLLOUT_STEPS):
+            global_step += 1
+            state_t = torch.tensor(state, dtype=torch.float32)
+            
+            with torch.no_grad():
+                dist = agent.actor.get_action_distribution(state_t)
+                action = dist.sample().item()
+                log_prob = dist.log_prob(torch.tensor(action)).item()
+                value = agent.critic(state_t).item()
+                
+            next_state, reward, terminated, truncated, _ = env.step(action)
+            done = terminated or truncated
+            current_episode_reward += reward
+            
+            b_states.append(state)
+            b_actions.append(action)
+            b_log_probs.append(log_prob)
+            b_rewards.append(reward)
+            b_dones.append(done)
+            b_values.append(value)
+            
+            state = next_state
+            if done:
+                state, _ = env.reset()
+                episode_rewards.append(current_episode_reward)
+                if len(episode_rewards) % 10 == 0:
+                    print(f"Step: {global_step} | Avg Reward (Last 10 Eps): {np.mean(episode_rewards[-10:]):.2f}")
+                current_episode_reward = 0
+                
+        # Compute bootstrap value for the final unfinished step
+        with torch.no_grad():
+            next_value = agent.critic(torch.tensor(state, dtype=torch.float32)).item() if not done else 0
+            
+        # 3. Generalized Advantage Estimation (GAE) Calculation
+        b_advantages = np.zeros_like(b_rewards, dtype=np.float32)
+        b_returns = np.zeros_like(b_rewards, dtype=np.float32)
+        last_gae_lam = 0
+        
+        for t in reversed(range(ROLLOUT_STEPS)):
+            next_non_terminal = 1.0 - b_dones[t]
+            next_val = b_values[t + 1] if t < ROLLOUT_STEPS - 1 else next_value
+            
+            # Delta (temporal difference error)
+            delta = b_rewards[t] + GAMMA * next_val * next_non_terminal - b_values[t]
+            
+            # GAE tracking formula
+            b_advantages[t] = last_gae_lam = delta + GAMMA * GAE_LAMBDA * next_non_terminal * last_gae_lam
+            b_returns[t] = b_advantages[t] + b_values[t]
+            
+        # 4. Policy Optimization Phase
+        agent.train_step(b_states, b_actions, b_log_probs, b_returns, b_advantages)
+
+    env.close()
+
+if __name__ == "__main__":
+    main()
+\end{lstlisting}
+
+\begin{table}[H]
+  \centering
+  \caption{代码核心要点解读}
+  \label{tab:code-key}
+  \begin{tabular}{>{\centering\arraybackslash}m{5cm}
+                 >{\centering\arraybackslash}m{6cm}}
+    \toprule
+    \textbf{代码段} & \textbf{数学含义} \\
+    \midrule
+    \lstinline|Categorical(logits).sample()| & 从 softmax 策略分布 $\pi_\theta(a|s)$ 采样动作 \\
+    \midrule
+    \lstinline|torch.clamp(ratios, 1-CLIP_EPSILON, 1+CLIP_EPSILON)| & 实现 $\text{clip}(r_t, 1-\epsilon, 1+\epsilon)$ \\
+    \midrule
+    \lstinline|torch.min(surr1, surr2)| & 实现 $L_{CLIP}$ 中的 $\min(\cdot, \cdot)$ 算子 \\
+    \midrule
+    \lstinline|-torch.min(surr1, surr2).mean()| & 负号因为我们执行梯度下降（最小化负 PPO 损失 = 最大化 $L_{CLIP}$）\\
+    \midrule
+    \lstinline|GAE tracking formula| & 计算 $A\hat{}t = \delta_t + \gamma\lambda\delta_{t+1} + \cdots$ \\
+    \midrule
+    \lstinline|b_returns[t] = b_advantages[t] + b_values[t]| & 计算目标值 $V_{targ}^t = A\hat{}t + V(s_t)$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{超参数含义}
+
+\begin{longtable}{>{\centering\arraybackslash}m{3cm}
+               >{\centering\arraybackslash}m{2cm}
+               >{\centering\arraybackslash}m{6cm}}
+  \caption{超参数表} \label{tab:hyperparams} \\
+  \toprule
+  \textbf{超参数} & \textbf{值} & \textbf{含义} \\
+  \midrule
+  \endfirsthead
+  \toprule
+  \textbf{超参数} & \textbf{值} & \textbf{含义} \\
+  \midrule
+  \endhead
+  \bottomrule
+  \endlastfoot
+
+  CLIP\_EPSILON & 0.2 & 控制策略在一次更新中可以偏离 $\pi_{\theta_{old}}$ 的程度 \\
+  GAE\_LAMBDA & 0.95 & 平衡优势估计中的偏差-方差权衡 \\
+  ROLLOUT\_STEPS & 2048 & 每次更新前收集的总样本数 ($N \times T$) \\
+  PPO\_EPOCHS & 10 & 重用相同数据更新 $\theta$ 的次数 \\
+  MINIBATCH\_SIZE & 64 & 每个小批次的梯度计算大小 \\
+  GAMMA & 0.99 & 未来奖励的折扣因子 \\
+  LEARNING\_RATE & 3e-4 & Adam 优化器的步长 \\
+\end{longtable}
+
+% ============================================================
+% Chapter 12: Practical Projects
+% ============================================================
+\section{实践项目推荐}\label{sec:projects}
+
+\subsection{项目 1：LunarLander-v3（离散控制）}
+
+\textbf{这是什么：}一个经典的向量环境，你必须使用主推进器和侧推进器安全地将月球着陆器模块引导到着陆垫上。
+
+\textbf{为什么这是一个很好的测试：}它引入了高度不宽容的物理。如果你的推进器发射太早或太晚，你就会坠毁。这是一个测试你的价值网络基线准确性的优秀环境，因为它包含一个明显的局部最小值（永远悬停恐惧着陆）。
+
+\subsection{项目 2：BipedalWalker-v3（连续控制过渡）}
+
+\textbf{这是什么：}一个双足机器人必须学会在不平坦的地形上向前行走而不会摔倒的 2D 环境。
+
+\textbf{为什么这是一个很好的测试：}这需要修改你的 Actor 网络来处理\textbf{连续动作空间}（输出高斯分布的均值 $\mu$ 和方差 $\sigma^2$ 而不是离散 logits）。PPO 在连续机器人任务中大放异彩；看着你的步行者从不协调的甩动变成稳定的冲刺是非常有成就感的。
+
+\subsection{项目 3：Atari Pong（基于视觉的 RL）}
+
+\textbf{这是什么：}使用如 \lstinline|gym-super-mario-bros| 或 \lstinline|stable-baselines3| 的 Atari 环境包装经典视频游戏模拟器。
+
+\textbf{为什么这是一个很好的测试：}它迫使你用\textbf{卷积神经网络 (CNN)} 替换代码中的简单多层感知器 (MLP)。你的智能体必须学会读取原始像素数组，提取空间信息，并直接映射到游戏控制。
+
+\subsection{项目 4：自定义交易环境}
+
+\textbf{这是什么：}编写一个读取历史股票或加密货币价格数据的自定义 Gymnasium 子类。动作是 \lstinline|[0: Hold, 1: Buy, 2: Sell]|，奖励是你的投资组合净值的変化。
+
+\textbf{为什么这是一个很好的测试：}这将理论桥接到现实世界的应用。PPO 被量化交易公司广泛使用，因为其裁剪目标防止了当金融市场经历突然的波动性变化时灾难性的、不稳定的交易调整。
+
+% ============================================================
+% Appendix A: Mathematical Tools
+% ============================================================
+\section{附录 A：数学工具}\label{sec:appendix-math}
+
+\subsection{随机梯度下降 (SGD)}
+
+\textbf{数学公式：}
+
+在标准梯度下降中，我们通过计算整个数据集损失函数 $J(\theta)$ 的梯度来更新模型参数 $\theta$。
+
+在随机梯度下降中，我们通过在每个迭代中仅计算一个随机选择的训练样本（或单个迷你批次）的损失来近似那个真梯度。
+
+SGD 在步骤 $t$ 的数学更新规则是：
+
+\begin{equation}\label{eq:sgd}
+  \theta_{t+1} = theta_t - \eta \nabla_\theta L_i(\theta_t)
+\end{equation}
+
+\textbf{符号定义：}
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item $\theta_t$：步骤 $t$ 时的当前模型参数向量
+  \item $\theta_{t+1}$：下一步的更新参数
+  \item $\eta$ (Eta)：学习率——决定我们沿梯度下行的步长有多大
+  \item $i$：从训练数据集中随机选择的索引
+  \item $L_i(\theta_t)$：仅在训练实例 $(x_i, y_i)$ 上评估的损失函数
+  \item $\nabla_\theta L_i(\theta_t)$：损失关于 $\theta$ 的梯度（偏导数向量）
+\end{itemize}
+
+\textbf{SGD 的权衡：}
+
+\begin{table}[H]
+  \centering
+  \caption{SGD 优缺点}
+  \label{tab:sgd-tradeoff}
+  \begin{tabular}{m{5cm}m{6cm}}
+    \toprule
+    \textbf{优点} & \textbf{缺点} \\
+    \midrule
+    计算廉价：计算 1 个样本的梯度需要大大减少内存和时间 &噪声路径：参数更新有高方差 \\
+    \midrule
+    更快收敛：因为它不断更新参数 &永不定居：由于噪声，它在全局最小值周围振荡而不是精确停在上面 \\
+    \midrule
+    在线学习：可以在新数据流入时即时更新模型而不从头再训练 & \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{nn.Tanh() 激活函数}
+
+\textbf{什么是 nn.Tanh()？}
+
+nn.Tanh() 代表\textbf{双曲正切}激活函数。它将任何输入数字压缩到 -1.0 到 1.0之间的严格、可预测范围：
+
+\begin{equation}\label{eq:tanh}
+  \tanh(x) = \frac{e^x + e^{-x}}{e^x - e^{-x}}
+\end{equation}
+
+\textbf{为什么在 PPO 中使用 Tanh 而不是 ReLU？}
+
+虽然 nn.ReLU()（将所有负数变为 0）是计算机视觉之王，但 Tanh 在强化学习策略中更受欢迎：
+
+\begin{enumerate}
+  \setlength{\itemsep}{0.2em}
+  \item \textbf{零中心输出：}它将负输入映射到负输出，正输入映射到正输出，以零为中心其行为。这使得在上下移动概率时梯度更新更干净、更平衡
+  \item \textbf{更平滑分布：}Tanh 是一条光滑、连续的曲线。因为 Actor 网络输出概率（logits）形成策略分布，光滑曲线防止动作概率中突然、刺耳的尖峰
+\end{enumerate}
+
+% ============================================================
+% Appendix B: Symbol Table
+% ============================================================
+\section{附录 B：符号表}\label{sec:symbols}
+
+\begin{longtable}{m{3cm}m{7cm}}
+  \caption{符号表} \label{tab:symbols} \\
+  \toprule
+  \textbf{符号} & \textbf{含义} \\
+  \midrule
+  \endfirsthead
+  \toprule
+  \textbf{符号} & \textbf{含义} \\
+  \midrule
+  \endhead
+  \bottomrule
+  \endlastfoot
+
+  $\pi_\theta(a|s)$ & 参数化策略——在状态 $s$ 下选择动作 $a$ 的概率 \\
+  $\theta$ & 策略网络参数（权重和偏置） \\
+  $\theta_{old}$ & 前一次迭代的策略参数（行为策略） \\
+  $J(\theta)$ & 期望回报目标函数 \\
+  $r_t(\theta)$ & 概率比：$\frac{\pi_{\theta_{old}}(a_t|s_t)}{\pi_\theta(a_t|s_t)}$ \\
+  $L_{CPI}$ & 保守策略迭代目标 \\
+  $L_{CLIP}$ & PPO 裁剪代理目标 \\
+  $L^{VF}$ & 价值函数损失：$(V_\theta(s_t) - V_{targ}^t)^2$ \\
+  $S[\pi_\theta]$ & 状态 $s$ 处策略分布的熵 \\
+  $\hat{A}_t$ & 时间 $t$ 的估计优势 \\
+  $\delta_t$ & TD 误差：$r_t + \gamma V(s_{t+1}) - V(s_t)$ \\
+  $\gamma$ & 折扣因子 \\
+  $\lambda$ (GAE\_LAMBDA) & GAE 平滑参数 \\
+  $\epsilon$ (CLIP\_EPSILON) & 裁剪区间半宽（通常为 0.2） \\
+  $c_1$ & 价值函数损失系数 \\
+  $c_2$ & 熵奖励系数 \\
+  $N$ & 并行环境数 \\
+  $T$ &每次 rollout 的时间步数 \\
+  $M$ & 小批次大小 \\
+  $K$ & Epoch 数（数据遍历次数） \\
+  $\nabla_\theta$ & 关于 $\theta$ 的梯度 \\
+  $\hat{E}_t[\cdot]$ & 时间步的经验平均 \\
+  $KL(p \| q)$ & 从分布 $p$ 到 $q$ 的 KL 散度 \\
+  $F$ & Fisher Information Matrix \\
+\end{longtable}
+
+% ============================================================
+% References
+% ============================================================
+\section{参考文献}\label{sec:refs}
+
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item Schulman, J., Wolski, F., Dhariwal, P., Radford, A., \& Klimov, O. (2017). Proximal Policy Optimization Algorithms. \textit{arXiv preprint arXiv:1707.06347}.
+  \item Mnih, V., Badia, A. P., Mirza, M., et al. (2016). Asynchronous Methods for Deep Reinforcement Learning. \textit{International Conference on Machine Learning}.
+\end{itemize}
+
+\section{作者信息}\label{sec:author}
+
+\begin{center}
+  \begin{tabular}{p{15cm}}
+    \hline
+    \textbf{\large 作者信息} \\
+    \textbf{基本信息：} 杨骞玺 - 06年 - 北京理工大学 - 机器人工程专业 \\
+    \textbf{自我介绍：} 一位刚刚入门具身科研领域的学徒，未来想长期从事具身方向的科研和创业，用机器人替代人类重复的体力劳动。如果你对具身智能感兴趣，或是也在做自己喜欢的事，或是和我一样都喜欢阅读等等，都欢迎大家加我vx交朋友，我很丰富，无法简介 ;) \\
+    \textbf{vx：} Y1832800 \\
+    \hline
+  \end{tabular}
+\end{center}
+
+\end{document}
