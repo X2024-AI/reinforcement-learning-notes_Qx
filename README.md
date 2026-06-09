@@ -5,3 +5,10 @@ This repository archives personal reinforcement learning learning materials, inc
 - /algorithms: RL source codes implementation
 - /latex: LaTeX source files for formulas & documents
 - /pdf: Exported notebook PDF files
+
+## Environment Setup
+Run the following commands to create and activate the Conda environment:
+```bash
+conda env create -f environment.yml
+conda activate your_env_name
+```
