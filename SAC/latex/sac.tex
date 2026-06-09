@@ -1,0 +1,2152 @@
+% !TEX program = xelatex
+
+% !TEX encoding = UTF-8
+
+
+\documentclass[12pt,a4paper]{article}
+
+
+
+% ============================================================
+
+% Package Configuration
+
+% ============================================================
+
+\usepackage{xeCJK}
+
+\usepackage{fontspec}
+
+\setmainfont{Times New Roman}
+
+\setsansfont{Arial}
+
+\setmonofont{Consolas}
+
+
+
+\usepackage{amsmath,amssymb,amsfonts}
+
+\usepackage{mathtools}
+
+\usepackage{latexsym}
+
+\usepackage{enumitem}
+
+\usepackage{float}
+
+\usepackage{booktabs}
+
+\usepackage{array}
+
+\usepackage{diagbox}
+
+\usepackage{longtable}
+
+\usepackage{geometry}
+
+\geometry{left=2.5cm,right=2.5cm,top=3cm,bottom=3cm,headheight=1.5cm}
+
+
+
+\usepackage{titlesec}
+
+\usepackage{titletoc}
+
+\usepackage{fancyhdr}
+
+\pagestyle{fancy}
+
+\fancyhf{}
+
+\fancyhead[C]{\fontsize{10}{12}\selectfont Soft Actor-Critic (SAC) Algorithm Notes}
+
+\fancyfoot[C]{\thepage}
+
+\fancyfoot[R]{\fontsize{9}{11}\selectfont Reinforcement Learning}
+
+\usepackage{footnote}
+
+
+
+% ============================================================
+
+% Color Definitions
+
+% ============================================================
+
+\usepackage{xcolor}
+
+\definecolor{deepblue}{RGB}{41,77,155}
+
+\definecolor{lightblue}{RGB}{70,130,180}
+
+\definecolor{accentorange}{RGB}{210,105,30}
+
+\definecolor{softgreen}{RGB}{60,179,113}
+
+\definecolor{darkgray}{RGB}{60,60,60}
+
+\definecolor{lightgray}{RGB}{240,240,240}
+
+\definecolor{lightyellow}{RGB}{255,255,230}
+
+\definecolor{codegreen}{RGB}{46,139,87}
+
+\definecolor{codegray}{RGB}{128,128,128}
+
+\definecolor{authorred}{RGB}{160, 70, 75}
+
+
+
+% ============================================================
+
+% Custom Commands
+
+% ============================================================
+
+\newcommand{\mb}[1]{\mathbf{#1}}
+
+\newcommand{\bs}[1]{\boldsymbol{#1}}
+
+\newcommand{\E}{\mathbb{E}}
+
+\DeclareMathOperator{\Var}{Var}
+
+\DeclareMathOperator{\Cov}{Cov}
+
+\DeclareMathOperator{\KL}{KL}
+
+\DeclareMathOperator{\softmax}{softmax}
+
+
+
+% Gradient related
+
+\newcommand{\grad}{\nabla}
+
+\newcommand{\gradtheta}{\grad_{\theta}}
+
+
+
+% Common expectation/probability symbols
+
+\newcommand{\ptheta}{p_{\theta}}
+
+
+
+% ============================================================
+
+% Theorem Environment Settings
+
+% ============================================================
+
+\usepackage{amsthm}
+
+\usepackage{amsthm}
+
+\newtheoremstyle{noteplain}
+  {3pt}
+  {3pt}
+  {\itshape}
+  {0pt}
+  {\bfseries\color{deepblue}}
+  {---}
+  {3pt plus 2pt minus 1pt}
+  {\thmname{#1}\thmnumber{ #2}\thmnote{ (#3)}}
+
+\newtheoremstyle{noteexercise}
+  {3pt}
+  {3pt}
+  {\upshape}
+  {0pt}
+  {\sffamily\bfseries\color{accentorange}}
+  {---}
+  {3pt plus 2pt minus 1pt}
+  {\thmname{#1}\thmnumber{ #2}\thmnote{ (#3)}}
+
+\theoremstyle{noteplain}
+\newtheorem{notation}{Note}[section]
+\newtheorem{important}{Key Conclusion}[section]
+
+\theoremstyle{noteexercise}
+\newtheorem{exercise}{思考}[section]
+
+
+
+% ============================================================
+
+% Table Style
+
+% ============================================================
+
+\usepackage{booktabs}
+
+\usepackage{multirow}
+
+\usepackage[colwidth=auto]{colortbl}
+
+
+
+% ============================================================
+
+% Code Highlighting
+
+% ============================================================
+
+\usepackage{listings}
+\lstdefinestyle{mypy}{
+  language=Python,
+  basicstyle=\ttfamily\small,
+  commentstyle=\color{codegray}\itshape,
+  keywordstyle=\color{blue}\bfseries,
+  stringstyle=\color{codegreen},
+  numberstyle=\color{codegray},
+  frame=lines,
+  backgroundcolor=\color{lightgray},
+  lineskip=-0.5pt,
+  tabsize=4,
+  breaklines=true,
+  captionpos=b,
+  numbers=left,
+  stepnumber=1,
+  numbersep=8pt,
+  xleftmargin=2em,
+  framexleftmargin=2em,
+  framexrightmargin=0em,
+  framextopmargin=0em,
+  framexbottommargin=0em,
+  showspaces=false,
+  showstringspaces=false,
+}
+
+\lstdefinestyle{mytex}{
+  language=[LaTeX]TeX,
+  basicstyle=\ttfamily\small,
+  commentstyle=\color{codegray}\itshape,
+  keywordstyle=\color{blue}\bfseries,
+  stringstyle=\color{codegreen},
+  numberstyle=\color{codegray},
+  frame=lines,
+  backgroundcolor=\color{lightgray},
+  lineskip=-0.5pt,
+  tabsize=4,
+  breaklines=true,
+  captionpos=b,
+  numbers=left,
+  stepnumber=1,
+  numbersep=8pt,
+  xleftmargin=2em,
+  framexleftmargin=2em,
+  framexrightmargin=0em,
+  framextopmargin=0em,
+  framexbottommargin=0em,
+  showspaces=false,
+  showstringspaces=false,
+}
+
+\lstset{style=mypy}
+
+
+
+% ============================================================
+
+% TikZ Support
+
+% ============================================================
+
+\usepackage{tikz}
+
+\usetikzlibrary{positioning,arrows.meta,calc,shapes.geometric,decorations.pathreplacing}
+
+
+
+% ============================================================
+
+% Page Decoration
+
+% ============================================================
+
+\usepackage{eso-pic}
+
+\AddToShipoutPicture{%
+  \AtPageUpperLeft{%
+    \hspace{\paperwidth-7cm}\color{deepblue}%
+    \rule[-8pt]{7cm}{3pt}%
+  }%
+}
+
+
+
+% ============================================================
+
+% Quote Block Design
+
+% ============================================================
+
+\usepackage{tcolorbox}
+
+\tcbuselibrary{xparse,skins,hooks}
+
+\newtcolorbox{keypoint}[1][]{
+  colback=lightyellow!50!white,
+  colframe=accentorange!60!black,
+  fonttitle=\sffamily\bfseries\color{accentorange},
+  title=#1,
+  parbox=false,
+  boxrule=1pt,
+  top=6pt,
+  bottom=6pt,
+  left=6pt,
+  right=6pt,
+  arc=4pt,
+  outer arc=4pt,
+  before skip=10pt,
+  after skip=6pt,
+}
+
+
+
+\newtcolorbox{summarybox}[1][]{
+  colback=lightblue!15!white,
+  colframe=deepblue!80!black,
+  fonttitle=\sffamily\bfseries\color{white},
+  title=#1,
+  parbox=false,
+  boxrule=1pt,
+  top=6pt,
+  bottom=6pt,
+  left=6pt,
+  right=6pt,
+  arc=4pt,
+  outer arc=4pt,
+  before skip=10pt,
+  after skip=6pt,
+}
+
+
+
+\newtcolorbox{darkbox}[1][]{
+  colback=darkgray!95!white,
+  colframe=lightblue!80!white,
+  fonttitle=\sffamily\bfseries\color{white},
+  title=#1,
+  coltext=white,
+  parbox=false,
+  boxrule=0.5pt,
+  top=6pt,
+  bottom=6pt,
+  left=8pt,
+  right=8pt,
+  arc=4pt,
+  outer arc=4pt,
+  before skip=10pt,
+  after skip=6pt,
+}
+
+
+
+% ============================================================
+
+% hyperref Settings
+
+% ============================================================
+
+\usepackage[
+  colorlinks=true,
+  linkcolor=deepblue,
+  urlcolor=lightblue,
+  citecolor=accentorange,
+  pdftitle={Soft Actor-Critic (SAC) Algorithm Notes},
+  pdfauthor={千喜Qx},
+  pdfsubject={Reinforcement Learning},
+  bookmarksnumbered=true,
+  bookmarksopen=true,
+]{hyperref}
+
+
+
+% ============================================================
+
+% Section Title Format
+
+% ============================================================
+
+\usepackage{sectsty}
+
+\sectionfont{\Large\bfseries\color{deepblue}}
+
+\subsectionfont{\large\bfseries\color{deepblue!80!black}}
+
+\subsubsectionfont{\normalsize\bfseries\color{deepblue!70!black}}
+
+
+
+% ============================================================
+
+% Table of Contents Customization
+
+% ============================================================
+
+\contentsmargin{0.5cm}
+
+\titlecontents{section}[1.2em]
+  {\addvspace{3pt}\large\bfseries\color{deepblue}}
+  {\contentslabel[\quad\thecontentslabel]{2.5em}}
+  {}
+  {\titlerule*[1pc]{.}\contentspage}
+
+
+
+% ============================================================
+
+% Document Title
+
+% ============================================================
+
+\begin{document}
+
+
+
+% ============================================================
+
+% Cover Page
+
+% ============================================================
+
+\thispagestyle{empty}
+
+
+
+\vspace*{1cm}
+
+
+
+\begin{center}
+  \parbox{0.9\textwidth}{
+    \centering
+    \rule[6pt]{0.9\textwidth}{2pt}
+    \vspace{0.3cm}
+    {\LARGE\bfseries\color{deepblue} Soft Actor-Critic \\[0.4em] (SAC) Algorithm Notes}
+    \vspace{0.3cm}
+    \rule[6pt]{0.9\textwidth}{2pt}
+  }
+\end{center}
+
+
+
+\vspace{0.8cm}
+
+
+
+\begin{center}
+  \begin{minipage}{0.7\textwidth}
+    \centering
+    \large\rmfamily\color{authorred}
+    千喜 Qx \\[0.6em]
+    \normalsize\rmfamily\color{darkgray} 2026/06/09
+  \end{minipage}
+\end{center}
+
+
+
+\vspace{1cm}
+
+
+
+\tableofcontents
+
+
+
+\newpage
+
+\pagenumbering{arabic}
+
+\pagestyle{fancy}
+
+
+
+% ============================================================
+
+% Chapter 1: Background and Motivation
+
+% ============================================================
+
+\section{Background and Motivation}\label{sec:bg}
+
+
+
+\subsection{Limitations of Standard Reinforcement Learning}\label{ssec:limitations}
+
+
+
+Standard reinforcement learning algorithms aim to maximize the expected cumulative reward:
+
+$$J(\pi) = \mathbb{E}_{\tau \sim \pi}\left[\sum_{t=0}^{T} r(s_t, a_t)\right]$$
+
+\textbf{Limitations:}
+
+\begin{itemize}
+  \setlength{\itemsep}{0.3em}
+  \item \textbf{Poor Exploration}: Standard RL agents tend to converge to local optima quickly, especially in sparse reward environments.
+  \item \textbf{Sensitivity to Initial Conditions}: The learned policy can be heavily dependent on the initial state distribution and early experiences.
+  \item \textbf{Lack of Robustness}: A policy that is optimal for one task distribution may completely fail when the environment changes slightly.
+\end{itemize}
+
+
+
+\subsection{Maximum Entropy Reinforcement Learning Framework}\label{ssec:maxent}
+
+
+
+Soft Actor-Critic (SAC), derived by Tuomas Haarnoja et al. in 2018, is an \textbf{off-policy actor-critic algorithm} based on the \textbf{maximum entropy reinforcement learning framework}.
+
+Unlike standard RL, which only maximizes expected cumulative rewards, SAC encourages the agent to act as randomly as possible while still succeeding at the task:
+
+$$J(\pi) = \mathbb{E}_{\tau \sim \pi}\left[\sum_{t=0}^{T} r(s_t, a_t) + \alpha \mathcal{H}(\pi(\cdot|s_t))\right]$$
+
+This leads to much better exploration and robustness.
+
+
+
+\subsection{Why Entropy Regularization?}\label{ssec:why-entropy}
+
+
+
+The entropy $\mathcal{H}(\pi)$ of a policy measures the ``randomness'' or ``uncertainty'' in the action selection:
+
+\begin{itemize}
+  \item \textbf{High entropy} $\Longrightarrow$ The policy is more exploratory, spreading probability mass across many actions.
+  \item \textbf{Low entropy} $\Longrightarrow$ The policy is more deterministic, focusing on specific actions.
+\end{itemize}
+
+\textbf{Benefits:}
+
+\begin{enumerate}
+  \setlength{\itemsep}{0.3em}
+  \item \textbf{Explicit Exploration Incentive}: The agent is explicitly rewarded for maintaining uncertainty, preventing premature convergence.
+  \item \textbf{Multi-Modal Discovery}: In tasks with multiple equally good strategies, maximum entropy RL can learn to use all of them.
+  \item \textbf{Improved Stability}: The entropy term smooths the optimization landscape.
+\end{enumerate}
+
+
+
+% ============================================================
+
+% Chapter 2: The Maximum Entropy Objective
+
+% ============================================================
+
+\section{The Maximum Entropy Objective}\label{sec:maxent-obj}
+
+
+
+\subsection{Standard RL Objective}\label{ssec:standard-obj}
+
+
+
+In standard RL, the goal is to maximize the expected sum of rewards:
+
+$$J(\pi) = \mathbb{E}_{(s_t, a_t) \sim \rho_\pi}\left[\sum_{t=0}^{T} r(s_t, a_t)\right]$$
+
+where $\rho_\pi$ is the state-action trajectory distribution under policy $\pi$.
+
+
+
+\subsection{Entropy-Augmented Objective}\label{ssec:entropy-obj}
+
+
+
+In maximum entropy RL, we add an entropy regularization term. The \textbf{generalized objective} $J(\pi)$ is defined as:
+
+\begin{equation}\label{eq:maxent-obj}
+\boxed{J(\pi) = \mathbb{E}_{(s_t, a_t) \sim \rho_\pi}\left[\sum_{t=0}^{T} r(s_t, a_t) + \alpha \mathcal{H}(\pi(\cdot|s_t))\right]}
+\end{equation}
+
+\textbf{Symbol Definitions:}
+
+\begin{itemize}
+  \setlength{\itemsep}{0.2em}
+  \item $\rho_\pi$: State-action trajectory distribution under policy $\pi$
+  \item $\alpha$: Temperature parameter controlling the trade-off between reward and entropy
+  \item $\mathcal{H}(\pi(\cdot|s_t))$: Shannon entropy of the policy at state $s_t$
+\end{itemize}
+
+
+
+\subsection{The Temperature Parameter $\alpha$}\label{ssec:alpha}
+
+
+
+The temperature parameter $\alpha$ controls the \textbf{trade-off} between:
+
+\begin{itemize}
+  \item \textbf{Maximizing reward} (exploitation): Focusing on actions known to yield high returns.
+  \item \textbf{Maximizing entropy} (exploration): Acting as randomly as possible.
+\end{itemize}
+
+\textbf{Effect of $\alpha$ values:}
+
+\begin{table}[H]
+  \centering
+  \caption{Effect of $\alpha$ values}
+  \label{tab:alpha-effect}
+  \begin{tabular}{m{4cm}m{6cm}}
+    \toprule
+    \textbf{$\alpha$ Value} & \textbf{Behavior} \\
+    \midrule
+    $\alpha = 0$ & Reduces to standard RL; no entropy bonus \\
+    $\alpha \to \infty$ & Policy becomes purely random (uniform distribution) \\
+    $\alpha$ small but positive & Balances exploitation and exploration \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+
+
+\subsection{Shannon Entropy Definition}\label{ssec:shannon}
+
+
+
+The Shannon entropy of the policy at state $s_t$ is calculated as:
+
+\begin{equation}\label{eq:shannon}
+\boxed{\mathcal{H}(\pi(\cdot|s_t)) = \mathbb{E}_{a_t \sim \pi(\cdot|s_t)}[-\log\pi(a_t|s_t)]}
+\end{equation}
+
+\textbf{Intuition:} The entropy is the expected negative log-probability of the action taken. If the policy is deterministic (always selects one action with probability 1), then $-\log(1) = 0$ and entropy is zero. If the policy is uniform (all actions equally likely), entropy is maximized.
+
+
+
+% ============================================================
+
+% Chapter 3: Soft Value Functions
+
+% ============================================================
+
+\section{Soft Value Functions}\label{sec:soft-value}
+
+
+
+\subsection{Soft Q-Function: Definition and Intuition}\label{ssec:soft-q}
+
+
+
+The soft Q-value represents the expected return \textbf{plus} the expected future entropy of following policy $\pi$ after taking action $a_t$ in state $s_t$:
+
+\begin{equation}\label{eq:soft-q}
+\boxed{Q(s_t, a_t) = r(s_t, a_t) + \mathbb{E}_{\tau \sim \pi}\left[\sum_{k=1}^{T-t} \gamma^k \left(r(s_{t+k}, a_{t+k}) + \alpha \mathcal{H}(\pi(\cdot|s_{t+k}))\right)\right]}
+\end{equation}
+
+\textbf{Key insight:} Unlike standard Q-values which only count future rewards, soft Q-values also account for future entropy bonuses.
+
+
+
+\subsection{Soft V-Function: Definition and Intuition}\label{ssec:soft-v}
+
+
+
+The soft V-value represents the expected total value (including entropy) of starting in state $s_t$:
+
+\begin{equation}\label{eq:soft-v}
+\boxed{V(s_t) = \mathbb{E}_{a_t \sim \pi(\cdot|s_t)}[Q(s_t, a_t) - \alpha \log\pi(a_t|s_t)]}
+\end{equation}
+
+
+
+\subsection{Relationship Between Soft Q and Soft V}\label{ssec:q-v-relation}
+
+
+
+By substituting the definition of $V(s_{t+1})$ into the Q-function:
+
+$$V(s_t) = \mathbb{E}_{a_t \sim \pi}[Q(s_t, a_t) - \alpha \log\pi(a_t|s_t)]$$
+
+This shows that the soft V-function is the \textbf{expectation} of the soft Q-function under the current policy, minus the entropy term.
+
+
+
+\subsection{The Soft Bellman Equation}\label{ssec:soft-bellman}
+
+
+
+By substituting $V(s_{t+1})$ back into the Q-function, we derive the \textbf{Soft Bellman Equation}:
+
+\begin{equation}\label{eq:soft-bellman}
+\boxed{Q(s_t, a_t) = r(s_t, a_t) + \gamma \mathbb{E}_{s_{t+1} \sim p}[V(s_{t+1})]}
+\end{equation}
+
+\textbf{Comparison with Standard Bellman Equation:}
+
+\begin{table}[H]
+  \centering
+  \caption{Standard vs Soft Bellman Equation}
+  \label{tab:bellman-comp}
+  \begin{tabular}{m{4cm}m{5cm}m{5cm}}
+    \toprule
+    \textbf{Aspect} & \textbf{Standard RL} & \textbf{Soft RL} \\
+    \midrule
+    Q-function update & $Q(s,a) = r + \gamma \mathbb{E}[Q(s',a')]$ & $Q(s,a) = r + \gamma \mathbb{E}[V(s')]$ \\
+    \midrule
+    Key difference & Q depends on future Q-values & Q depends on V (expectation over actions) \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+The key difference is that the soft V-function already includes the entropy term, so we don't need to sample an action in the backup.
+
+
+
+% ============================================================
+
+% Chapter 4: Soft Policy Iteration
+
+% ============================================================
+
+\section{Soft Policy Iteration}\label{sec:spi}
+
+
+
+\subsection{Overview: Two-Step Alternating Process}\label{ssec:spi-overview}
+
+
+
+SAC guarantees convergence to the optimal maximum entropy policy by \textbf{alternating} between two steps:
+
+\begin{enumerate}
+  \setlength{\itemsep}{0.3em}
+  \item \textbf{Soft Policy Evaluation}: Compute the soft Q-value for an arbitrary policy $\pi$.
+  \item \textbf{Soft Policy Improvement}: Update the policy toward the optimal distribution.
+\end{enumerate}
+
+
+
+\subsection{Soft Policy Evaluation: The Contraction Operator}\label{ssec:contraction}
+
+
+
+We define a \textbf{modified Bellman backup operator} $\mathcal{T}^\pi$:
+
+\begin{equation}\label{eq:contraction}
+\boxed{\mathcal{T}^\pi Q(s,a) \triangleq r(s,a) + \gamma \mathbb{E}_{s' \sim p}[V(s')]}
+\end{equation}
+
+where $V(s') = \mathbb{E}_{a' \sim \pi}[Q(s', a') - \alpha \log\pi(a'|s')]$.
+
+\textbf{Contraction Mapping Theorem:} Repeatedly applying $\mathcal{T}^\pi$ causes $Q$ to \textbf{converge monotonically} to the true soft Q-value $Q^\pi$ for that policy.
+
+
+
+\subsection{Soft Policy Improvement: Constrained Optimization}\label{ssec:improvement}
+
+
+
+In the improvement step, we want to find a new policy $\pi_{\text{new}}$ that \textbf{maximizes} the expected soft value:
+
+\begin{equation}\label{eq:improvement}
+\pi_{\text{new}} = \arg\max_{\pi' \in \Pi} \mathbb{E}_{a \sim \pi'}\left[Q^{\pi_{\text{old}}}(s,a) - \alpha \log\pi'(a|s)\right]
+\end{equation}
+
+
+
+\subsection{The Partition Function $Z(s)$ and Normalization}\label{ssec:partition}
+
+
+
+The Boltzmann (Gibbs) distribution assigns probabilities exponentially proportional to Q-values:
+
+$$\pi^*(a|s) \propto \exp\left(\frac{1}{\alpha}Q(s,a)\right)$$
+
+To make this a valid probability distribution, we need to normalize:
+
+\begin{equation}\label{eq:partition}
+\boxed{Z(s) = \int_{\mathcal{A}} \exp\left(\frac{1}{\alpha}Q(s, a')\right) da'}
+\end{equation}
+
+\textbf{Why We Need $Z(s)$:} An exponential function outputs values from $0$ to $\infty$. For a valid probability density, the total integral must equal 1.
+
+
+
+\subsection{KL Divergence Projection (Information Projection)}\label{ssec:kl-projection}
+
+
+
+To solve the constrained optimization, we \textbf{project} the exponential onto $\Pi$ using the \textbf{Kullback-Leibler (KL) divergence}:
+
+\begin{equation}\label{eq:kl-proj}
+\pi_{\text{new}} = \arg\min_{\pi' \in \Pi} D_{\text{KL}}\left(\pi'(\cdot|s) \| \frac{Z(s)\exp\left(\frac{1}{\alpha}Q^{\pi_{\text{old}}}(s,\cdot)\right)}{Z(s)}\right)
+\end{equation}
+
+\begin{keypoint}[Decoding the Original SAC Paper]
+``To account for the constraint that $\pi \in \Pi$, we project the improved policy into the desired set of policies. While in principle we could choose any projection, it will turn out to be convenient to use the information projection defined in terms of the Kullback-Leibler divergence.''
+
+\textbf{Decoded:}
+
+\begin{enumerate}
+  \item \textbf{``The constraint $\pi \in \Pi$''}: Our neural network can only output simple shapes (e.g., Gaussian distributions).
+  \item \textbf{``Project''}: Find the closest distribution within $\Pi$ to the theoretical optimal $\pi^*$.
+  \item \textbf{``Information projection''}: Use KL divergence in a specific direction ($D_{\text{KL}}(\pi_\phi \| \pi^*)$).
+\end{enumerate}
+
+\end{keypoint}
+
+
+
+\subsection{Mathematical Proof of Monotonic Improvement}\label{ssec:monotonic}
+
+
+
+\textbf{Expanding the KL Divergence:}
+
+$$D_{\text{KL}}(\pi' \| \pi^*) = \mathbb{E}_{a \sim \pi'}\left[\log\pi'(a|s) - \frac{1}{\alpha}Q^{\pi_{\text{old}}}(s,a) + \log Z(s)\right]$$
+
+Since $\log Z(s)$ depends only on the state (not on $\pi'$), it acts as a \textbf{constant} during optimization.
+
+\textbf{Minimizing this KL divergence is mathematically identical to maximizing:}
+
+$$\mathbb{E}_{a \sim \pi'}\left[Q^{\pi_{\text{old}}}(s,a) - \alpha \log\pi'(a|s)\right]$$
+
+\begin{important}
+Updating the policy via KL divergence minimization \textbf{strictly improves} its soft value function.
+\end{important}
+
+
+
+% ============================================================
+
+% Chapter 5: Function Approximation
+
+% ============================================================
+
+\section{Function Approximation}\label{sec:func-approx}
+
+
+
+\subsection{Neural Network Architecture}\label{ssec:nn-arch}
+
+
+
+In continuous, high-dimensional spaces, we use neural networks:
+
+\begin{table}[H]
+  \centering
+  \caption{Network Architecture}
+  \label{tab:nn-arch}
+  \begin{tabular}{m{3cm}m{3cm}m{5cm}}
+    \toprule
+    \textbf{Network} & \textbf{Symbol} & \textbf{Function} \\
+    \midrule
+    Critic & $Q_\theta(s,a)$ & Approximates the soft Q-value \\
+    Actor & $\pi_\phi(a|s)$ & Outputs the policy distribution \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+
+
+\subsection{Critic Network Loss (Q-Network)}\label{ssec:critic-loss}
+
+
+
+The parameters $\theta$ are trained by minimizing the \textbf{mean squared Bellman error}:
+
+\begin{equation}\label{eq:critic-loss}
+\boxed{J_Q(\theta) = \mathbb{E}_{(s,a,r,s') \sim \mathcal{D}}\left[\frac{1}{2}\left(Q_\theta(s,a) - y\right)^2\right]}
+\end{equation}
+
+where the \textbf{target value function} $\hat{V}(s')$ is:
+
+$$\hat{V}(s') = \mathbb{E}_{a' \sim \pi_\phi(\cdot|s')}\left[Q_{\bar{\theta}}(s', a') - \alpha \log\pi_\phi(a'|s')\right]$$
+
+\textbf{Target Value Calculation:}
+
+$$y = r + \gamma \hat{V}(s')$$
+
+
+
+\subsection{Actor Network Loss ($\pi$-Network)}\label{ssec:actor-loss}
+
+
+
+The actor parameters $\phi$ are trained directly to minimize the KL divergence objective:
+
+\begin{equation}\label{eq:actor-loss}
+\boxed{J_\pi(\phi) = \mathbb{E}_{s \sim \mathcal{D}, a \sim \pi_\phi}\left[\alpha \log\pi_\phi(a|s) - Q_\theta(s,a)\right]}
+\end{equation}
+
+
+
+\subsection{The Reparameterization Trick}\label{ssec:reparam}
+
+
+
+\textbf{Problem:} The stochastic sampling $a \sim \pi_\phi(\cdot|s)$ creates a \textbf{high-variance} gradient estimator.
+
+\textbf{Solution:} Apply the \textbf{reparameterization trick}. We define the action as a \textbf{deterministic function} of the state and an independent noise vector $\epsilon$:
+
+\begin{equation}\label{eq:reparam}
+\boxed{a = f_\phi(\epsilon; s) = \tanh\left(\mu_\phi(s) + \sigma_\phi(s) \odot \epsilon\right), \quad \epsilon \sim \mathcal{N}(0, I)}
+\end{equation}
+
+\textbf{Why this works:} The noise $\epsilon$ is independent of $\phi$. Gradients can now flow directly through $\mu_\phi$ and $\sigma_\phi$ because the stochasticity is isolated in $\epsilon$.
+
+\textbf{Reparameterized Actor Loss:}
+
+$$J_\pi(\phi) = \mathbb{E}_{s \sim \mathcal{D}, \epsilon \sim \mathcal{N}}\left[\alpha \log\pi_\phi(f_\phi(\epsilon;s)|s) - Q_\theta(s, f_\phi(\epsilon;s))\right]$$
+
+
+
+% ============================================================
+
+% Chapter 6: The Tanh Correction Term
+
+% ============================================================
+
+\section{The Tanh Correction Term}\label{sec:tanh}
+
+
+
+\subsection{Why We Need Tanh Squashing}\label{ssec:tanh-why}
+
+
+
+Neural networks naturally output unbounded values. However, physical environments have \textbf{hard constraints}. To enforce this, SAC passes the raw Gaussian policy output through a \textbf{tanh activation function} to bound actions to $[-1, 1]^D$.
+
+
+
+\subsection{Change-of-Variables Formula}\label{ssec:change-var}
+
+
+
+\textbf{Problem:} Because the action distribution is squashed by tanh, we cannot simply calculate the log-likelihood using the standard Gaussian formula.
+
+\textbf{Setup:}
+\begin{itemize}
+  \item $u \in \mathbb{R}^D$: Raw unbounded action sampled from Gaussian distribution $\mu(u|s)$
+  \item $a = \tanh(u)$: Squashed, final action bounded within $(-1, 1)^D$
+\end{itemize}
+
+The probability density of the squashed action $\pi(a|s)$ is related to the base density $\mu(u|s)$ by:
+
+$$\pi(a|s) = \mu(u|s) \cdot \left|\det\left(\frac{du}{da}\right)\right|^{-1}$$
+
+
+
+\subsection{Jacobian Determinant for Diagonal Gaussian}\label{ssec:jacobian}
+
+
+
+Because tanh is applied \textbf{element-wise} to each action dimension independently, the Jacobian is a \textbf{diagonal matrix}:
+
+$$\frac{du_i}{da_i} = \frac{1}{\text{sech}^2(u_i)} = 1 - \tanh^2(u_i)$$
+
+The determinant of a diagonal matrix is simply the product of its diagonal elements:
+
+$$\det\left(\frac{du}{da}\right) = \prod_{i=1}^{D} \left(1 - \tanh^2(u_i)\right)$$
+
+
+
+\subsection{Deriving the Final Log-Likelihood}\label{ssec:log-likelihood}
+
+
+
+Plugging this back into the change-of-variables equation:
+
+$$\pi(a|s) = \mu(u|s) \cdot \prod_{i=1}^{D} \frac{1}{1 - \tanh^2(u_i)}$$
+
+Taking the natural logarithm:
+
+\begin{equation}\label{eq:tanh-correction}
+\boxed{\log\pi(a|s) = \log\mu(u|s) - \sum_{i=1}^{D} \log\left(1 - \tanh^2(u_i)\right)}
+\end{equation}
+
+\textbf{This is the exact correction term used in SAC.}
+\begin{keypoint}[Confusion Point: Why the Correction is Necessary]
+
+Some practitioners forget to apply the tanh correction, which leads to:
+
+\begin{enumerate}
+  \item \textbf{Incorrect Policy Gradient}: The gradients don't properly account for the bounded action space.
+  \item \textbf{Policy Collapse}: The agent may output actions outside the valid range when the environment clips them.
+\end{enumerate}
+
+\end{keypoint}
+
+
+
+\subsection{Stable Numerical Implementation}\label{ssec:stable-num}
+
+
+
+\textbf{Problem:} When $u = 10$, $\tanh(10) \approx 1$, making $1 - \tanh^2(u) \approx 0$, and $\log(0) \to -\infty$.
+
+\textbf{Solution:} Use the stable form:
+
+\begin{equation}\label{eq:stable-tanh}
+\boxed{\log(1 - \tanh^2(u)) = 2\log2 - u - \text{softplus}(-2u)}
+\end{equation}
+
+where $\text{softplus}(x) = \log(1 + e^x)$.
+
+
+
+% ============================================================
+
+% Chapter 7: Automatic Entropy Tuning
+
+% ============================================================
+
+\section{Automatic Entropy Tuning}\label{sec:auto-entropy}
+
+
+
+\subsection{Constrained Formulation}\label{ssec:constrained}
+
+
+
+Instead of fixing $\alpha$ as a constant, we reframe maximum entropy RL as a \textbf{constrained optimization problem}:
+
+$$\max_{\pi_{0:T}} \mathbb{E}\left[\sum_{t=0}^{T} r(s_t, a_t)\right] \quad \text{s.t.} \quad \mathcal{H}(\pi_t(\cdot|s_t)) \geq \bar{\mathcal{H}} \quad \forall t$$
+
+
+
+\subsection{Lagrange Multiplier Method}\label{ssec:lagrange}
+
+
+
+Using the method of \textbf{Lagrange Multipliers}:
+
+$$\mathcal{L}(\pi_{0:T}, \alpha_{0:T}) = \mathbb{E}\left[\sum_{t=0}^{T} r(s_t, a_t) + \alpha_t(\mathcal{H}(\pi_t(\cdot|s_t)) - \bar{\mathcal{H}})\right]$$
+
+
+
+\subsection{The $\alpha$ Update Loss Function}\label{ssec:alpha-loss}
+
+
+
+\begin{equation}\label{eq:alpha-loss}
+\boxed{J(\alpha) = \alpha \cdot \mathbb{E}_{a_t \sim \pi_\phi}\left[-\log\pi_\phi(a_t|s_t) - \bar{\mathcal{H}}\right]}
+\end{equation}
+
+
+
+\subsection{Dynamics of $\alpha$ Adaptation}\label{ssec:alpha-dynamics}
+
+
+
+To see how $\alpha$ changes, we take the derivative of $J(\alpha)$ with respect to $\alpha$:
+
+$$\frac{\partial J}{\partial \alpha} = \mathbb{E}_{a \sim \pi}[-\log\pi_\phi(a|s)] - \bar{\mathcal{H}} = \mathcal{H}(\pi) - \bar{\mathcal{H}}$$
+
+In network training, we update parameters using \textbf{gradient descent}:
+
+$$\alpha \leftarrow \alpha - \eta \frac{\partial J}{\partial \alpha}$$
+
+\textbf{Scenario 1: Actual Entropy is Too High}
+
+\begin{itemize}
+  \item Condition: $-\log\pi_\phi(a_t|s_t) > \bar{\mathcal{H}}$ on average, meaning $\mathcal{H}(\pi) > \bar{\mathcal{H}}$
+  \item Gradient Sign: $\frac{\partial J}{\partial \alpha} > 0$ (positive)
+  \item The Update: $\alpha$ \textbf{decreases}
+  \item The Result: A lower $\alpha$ reduces the entropy penalty weight, allowing the agent to focus on exploitation.
+\end{itemize}
+
+\textbf{Scenario 2: Actual Entropy is Too Low}
+
+\begin{itemize}
+  \item Condition: $-\log\pi_\phi(a_t|s_t) < \bar{\mathcal{H}}$ on average, meaning $\mathcal{H}(\pi) < \bar{\mathcal{H}}$
+  \item Gradient Sign: $\frac{\partial J}{\partial \alpha} < 0$ (negative)
+  \item The Update: $\alpha$ \textbf{increases}
+  \item The Result: A higher $\alpha$ heavily penalizes predictable actions, forcing the policy to explore more.
+\end{itemize}
+
+\begin{important}
+\textbf{Summary:}
+
+\begin{itemize}
+  \item $- \log\pi(a|s) > \bar{\mathcal{H}} \Longrightarrow$ Entropy is too high $\Longrightarrow \alpha$ decreases.
+  \item $- \log\pi(a|s) < \bar{\mathcal{H}} \Longrightarrow$ Entropy is too low $\Longrightarrow \alpha$ increases.
+\end{itemize}
+
+\end{important}
+
+
+
+\subsection{Choosing Target Entropy $\bar{\mathcal{H}}$}\label{ssec:target-entropy}
+
+
+
+\begin{equation}\label{eq:target-entropy}
+\boxed{\bar{\mathcal{H}} = -\text{dim}(\mathcal{A})}
+\end{equation}
+
+where $\text{dim}(\mathcal{A})$ is the number of dimensions in the action space.
+
+
+
+% ============================================================
+
+% Chapter 8: The Partition Function $Z(s)$ in Practice
+
+% ============================================================
+
+\section{The Partition Function $Z(s)$ in Practice}\label{sec:partition-fn}
+
+
+
+\subsection{Physics Origin: Boltzmann Distribution}\label{ssec:boltzmann}
+
+
+
+The concept of a \textbf{partition function} comes from statistical mechanics. In maximum entropy RL:
+
+$$\pi^*(a|s) \propto \exp\left(\frac{1}{\alpha}Q(s,a)\right)$$
+
+This is known as the \textbf{Boltzmann (or Gibbs) distribution}.
+
+
+
+\subsection{Why $Z(s)$ Cannot Be Computed Directly}\label{ssec:z-impossible}
+
+
+
+\textbf{Problem:} Calculating the integral across continuous action spaces is \textbf{analytically intractable}:
+
+$$Z(s) = \int_{\mathcal{A}} \exp\left(\frac{1}{\alpha}Q(s, a')\right) da'$$
+
+
+
+\subsection{The Gradient Vanishing Trick}\label{ssec:gradient-vanish}
+
+
+
+\textbf{Key Insight:} We don't need to compute $Z(s)$ because it acts as a \textbf{constant} relative to the policy parameters $\phi$.
+
+\textbf{Expanding the KL divergence objective:}
+
+$$J_\pi(\phi) = \mathbb{E}_{a \sim \pi_\phi}\left[\log\pi_\phi(a|s) - \frac{1}{\alpha}Q(s,a) + \log Z(s)\right]$$
+
+When we take the gradient:
+
+\begin{equation}\label{eq:grad-zero}
+\boxed{\nabla_\phi \log Z(s) = 0}
+\end{equation}
+
+\textbf{The partition function naturally vanishes during differentiation.}
+\begin{keypoint}[Why the Information Projection is ``Convenient'']
+
+With I-projection: $Z(s)$ becomes an additive constant $\Longrightarrow$ vanishes during gradient update.
+
+With alternative projections (e.g., reverse KL): $Z(s)$ would remain trapped inside an expectation, requiring the impossible integral.
+
+\end{keypoint}
+
+
+
+% ============================================================
+
+% Chapter 9: Actor-Critic Architecture Analysis
+
+% ============================================================
+
+\section{Actor-Critic Architecture Analysis}\label{sec:arch-analysis}
+
+
+
+\subsection{Why Both Q-Network and V-Network? (Original Design)}\label{ssec:v-network}
+
+
+
+In the original 2018 SAC paper, the authors included a \textbf{separate V-network} to reduce computational variance.
+
+\textbf{Benefit:} By having a dedicated V-network, calculating the target for the Q-network doesn't require sampling an action $a_{t+1}$ from the policy at every training step.
+
+
+
+\subsection{Why One Network Is Enough (SAC-v2)}\label{ssec:sac-v2}
+
+
+
+In a subsequent revision (often called \textbf{SAC-v2}), the authors realized that maintaining three separate networks was \textbf{mathematically redundant}.
+
+In modern SAC, we only use a Q-network. The target is calculated by sampling the next action directly:
+
+$$J_Q(\theta) = \mathbb{E}\left[\frac{1}{2}\left(Q_\theta(s,a) - (r + \gamma(Q_{\bar{\theta}}(s', a') - \alpha \log\pi_\phi(a'|s')))\right)^2\right]$$
+
+
+
+\subsection{The Circular Dependency Problem}\label{ssec:circular}
+
+
+
+\textbf{Question:} The update of V-network relies on Q, and Q relies on V. Isn't this severely unstable?
+
+\textbf{Answer:} This circular dependency is called \textbf{bootstrapping}. Left unchecked, this causes values to explode or diverge.
+
+SAC prevents this using a \textbf{Target Network} that is \textbf{frozen} or changing very slowly.
+
+
+
+\subsection{Target Network and Polyak Averaging}\label{ssec:polyak}
+
+
+
+\textbf{Polyak Averaging (Soft Updates):}
+
+\begin{equation}\label{eq:polyak}
+\boxed{\bar{\psi} \leftarrow \tau \psi + (1 - \tau)\bar{\psi}}
+\end{equation}
+
+where $\tau$ is a very small number (typically $\tau = 0.005$).
+
+\begin{table}[H]
+  \centering
+  \caption{Stabilization Effect}
+  \label{tab:polyak}
+  \begin{tabular}{m{4cm}m{3cm}m{5cm}}
+    \toprule
+    \textbf{Network} & \textbf{Update Speed} & \textbf{Role} \\
+    \midrule
+    $Q_\theta$ (online) & Fast & Provides stable targets to the Q-network \\
+    $V_{\bar{\psi}}$ (target) & Slow (Polyak) & Tracks the true Q-value, preventing explosion \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+
+
+% ============================================================
+
+% Chapter 10: Twin Q-Networks and Overestimation Bias
+
+% ============================================================
+
+\section{Twin Q-Networks and Overestimation Bias}\label{sec:twin-q}
+
+
+
+\subsection{The Maximization Bias Problem}\label{ssec:max-bias}
+
+
+
+A neural network $Q_\theta(s,a)$ naturally has estimation error:
+
+$$Q_\theta(s,a) = Q^*(s,a) + \epsilon$$
+
+where $\mathbb{E}[\epsilon] = 0$ (unbiased).
+
+\textbf{The Problem:} In SAC, the actor is trained to maximize $Q_\theta$. When selecting the action to maximize:
+
+$$\mathbb{E}\left[\max_a Q_\theta(s,a)\right] \geq \max_a \mathbb{E}[Q_\theta(s,a)] = \max_a Q^*(s,a)$$
+
+Due to \textbf{Jensen's Inequality}, the maximum of noisy estimates is \textbf{biased upward}.
+
+
+
+\subsection{Mathematical Analysis of Error Propagation}\label{ssec:error-propagation}
+
+
+
+\textbf{Step $t+1$:} The actor selects an action that overestimates the value of state $s_{t+1}$.
+
+\textbf{Step $t$:} The Q-network updates its value for $s_t$ by bootstrapping off that \textbf{inflated} $s_{t+1}$ target.
+
+\textbf{The Loop:} Overestimation error cascades backward and multiplies, causing Q-values to grow infinitely large.
+
+
+
+\subsection{The Minimum Q-Value Trick (Clipped Double-Q)}\label{ssec:min-q}
+
+
+
+To break this loop, SAC adopts the \textbf{Clipped Double-Q Learning} mechanism. We initialize two \textbf{independent} Q-networks:
+
+$$Q_{\theta_1}(s,a) \quad \text{and} \quad Q_{\theta_2}(s,a)$$
+
+When calculating the target, we take the \textbf{minimum}:
+
+\begin{equation}\label{eq:min-q}
+\boxed{y = r + \gamma \left(\min_i Q_{\bar{\theta}_i}(s', a') - \alpha \log\pi_\phi(a'|s')\right)}
+\end{equation}
+
+\textbf{Why the Minimum Works:} Since $Q_{\theta_1}$ and $Q_{\theta_2}$ are independent, their estimation errors are also independent. By taking the minimum, the algorithm \textbf{filters out positive noise peaks}.
+
+
+
+\begin{important}
+\textbf{Why underestimation is safer than overestimation:}
+
+An underestimation bias is vastly safer for a reinforcement learning agent. If the agent underestimates a state slightly, it simply continues to explore. But if it overestimates, it will get stuck forever repeating a bad action, believing it is optimal.
+\end{important}
+
+
+
+% ============================================================
+
+% Chapter 11: Off-Policy vs On-Policy Analysis
+
+% ============================================================
+
+\section{Off-Policy vs On-Policy Analysis}\label{sec:off-policy}
+
+
+
+\subsection{Why SAC Can Be Off-Policy}\label{ssec:sac-offpolicy}
+
+
+
+\textbf{The Critic Doesn't Care Who Took the Action:} The Soft Bellman Equation states a fundamental truth: if you are in state $s_t$ and execute action $a_t$, the resulting reward and next state $s_{t+1}$ depend \textbf{entirely on the physics of the environment}. It doesn't matter if that action was chosen by the current smart policy or a random policy from training hour one.
+
+\textbf{The Actor Evaluates Old States with New Actions:}
+
+\begin{itemize}
+  \item States $s$ are sampled from the \textbf{historical replay buffer} $\mathcal{D}$.
+  \item Actions $a$ are sampled from the \textbf{current policy} $\pi_\phi$.
+\end{itemize}
+
+
+
+\subsection{Why PPO Is Inherently On-Policy}\label{ssec:ppo-onpolicy}
+
+
+
+PPO belongs to the \textbf{Policy Gradient} family. To optimize using data collected by an older policy $\pi_{\text{old}}$, policy gradient methods use \textbf{Importance Sampling}:
+
+$$r_t(\theta) = \frac{\pi_{\text{old}}(a_t|s_t)}{\pi_\theta(a_t|s_t)}$$
+
+\textbf{Problem:} For this correction to have low variance, $\pi_\theta$ must be \textbf{incredibly close} to $\pi_{\text{old}}$. If you feed PPO data from a replay buffer collected 100 iterations ago, the ratio $r_t(\theta)$ explodes toward infinity.
+
+
+
+\subsection{Key Architectural Differences}\label{ssec:diff-summary}
+
+
+
+\begin{table}[H]
+  \centering
+  \caption{SAC vs PPO Comparison}
+  \label{tab:sac-vs-ppo}
+  \begin{tabular}{m{3.5cm}m{4cm}m{4cm}}
+    \toprule
+    \textbf{Property} & \textbf{SAC} & \textbf{PPO} \\
+    \midrule
+    \textbf{Policy Type} & Off-policy & On-policy \\
+    \midrule
+    \textbf{Data Reuse} & Replay buffer (any past data) & Must discard after update \\
+    \midrule
+    \textbf{Value Estimation} & Bellman equation with critics & GAE \\
+    \midrule
+    \textbf{Stability} & Target networks + Twin-Q & Clipping mechanism \\
+    \midrule
+    \textbf{Sample Efficiency} & High (reuses data) & Low (wastes data) \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+
+
+% ============================================================
+
+% Chapter 12: Implementation Details and Engineering Tricks
+
+% ============================================================
+
+\section{Implementation Details and Engineering Tricks}\label{sec:impl}
+
+
+
+\subsection{Why Predict log\_std Instead of std}\label{ssec:log-std}
+
+
+
+A standard deviation $\sigma$ must be \textbf{strictly positive} ($\sigma > 0$). If your neural network outputs std directly, it could output a negative number during early training, crashing the code.
+
+\textbf{Solution:} Force the network to predict $\log\sigma$. When we compute $\sigma = \exp(\log\sigma)$, the exponential function \textbf{mathematically guarantees} a strictly positive value.
+
+
+
+\subsection{Clamping log\_std: [-20, 2] Rationale}\label{ssec:clamp}
+
+
+
+\textbf{Exploding Variance (log\_std\_max = 2):} If $\log\sigma = 20$, then $\sigma = \exp(20) \approx 4.8 \times 10^8$. Actions become pure random noise.
+
+\textbf{Numerical Underflow (log\_std\_min = -20):} If $\log\sigma = -50$, then $\sigma = \exp(-50) \approx 2.06 \times 10^{-9}$. This causes NaN errors when calculating $\log\pi(a|s)$.
+
+Clamping $\log\sigma$ between $[-20, 2]$ keeps $\sigma$ safely bounded.
+
+
+
+\subsection{The .sum(dim=-1, keepdim=True) Operation}\label{ssec:sum-dim}
+
+
+
+When an environment has multiple action dimensions, the actor network outputs a mean $\mu_i$ and standard deviation $\sigma_i$ for \textbf{each} individual dimension.
+
+SAC assumes a \textbf{Diagonal Gaussian policy}: Action dimensions are statistically independent.
+
+\textbf{Joint Probability:} The joint probability of multiple independent events is the \textbf{product} of their individual probabilities. In log-space, products become sums:
+
+$$\log P(a_1, a_2, \ldots, a_D) = \sum_{i=1}^{D} \log P(a_i)$$
+
+
+
+\subsection{Exploration vs Evaluation Mode}\label{ssec:explore-eval}
+
+
+
+\begin{darkbox}[select\_action function]
+\begin{verbatim}
+def select_action(self, state, evaluate=False):
+    state = torch.FloatTensor(state).unsqueeze(0)
+    if evaluate:
+        with torch.no_grad():
+            mu, _ = self.actor(state)
+            action = torch.tanh(mu)
+        return action.numpy()[0]
+    else:
+        with torch.no_grad():
+            action, _ = self.actor.sample(state)
+        return action.numpy()[0]
+\end{verbatim}
+\end{darkbox}
+
+\textbf{When \texttt{evaluate=False} (Training Mode):} The code calls \texttt{self.actor.sample(state)}. This uses the reparameterization trick to sample an action randomly. \textbf{Purpose:} Adds exploratory noise.
+
+\textbf{When \texttt{evaluate=True} (Testing Mode):} The code bypasses $\sigma$ and sampling entirely, extracting only the \textbf{mean} $\mu$. \textbf{Purpose:} Makes the policy completely \textbf{deterministic} for testing.
+
+
+
+% ============================================================
+
+% Chapter 13: Complete PyTorch Implementation
+
+% ============================================================
+
+\section{Complete PyTorch Implementation}\label{sec:pytorch}
+
+
+
+\subsection{Replay Buffer}\label{ssec:replay-buffer}
+
+
+
+\begin{lstlisting}[caption={Replay Buffer}, label={lst:replay}]
+class ReplayBuffer:
+    def __init__(self, capacity, state_dim, action_dim):
+        self.capacity = capacity
+        self.ptr = 0
+        self.size = 0
+        
+        self.states = np.zeros((capacity, state_dim), dtype=np.float32)
+        self.actions = np.zeros((capacity, action_dim), dtype=np.float32)
+        self.rewards = np.zeros((capacity, 1), dtype=np.float32)
+        self.next_states = np.zeros((capacity, state_dim), dtype=np.float32)
+        self.dones = np.zeros((capacity, 1), dtype=np.float32)
+
+    def push(self, state, action, reward, next_state, done):
+        self.states[self.ptr] = state
+        self.actions[self.ptr] = action
+        self.rewards[self.ptr] = reward
+        self.next_states[self.ptr] = next_state
+        self.dones[self.ptr] = done
+        
+        self.ptr = (self.ptr + 1) % self.capacity
+        self.size = min(self.size + 1, self.capacity)
+
+    def sample(self, batch_size):
+        ind = np.random.randint(0, self.size, size=batch_size)
+        return (
+            torch.FloatTensor(self.states[ind]),
+            torch.FloatTensor(self.actions[ind]),
+            torch.FloatTensor(self.rewards[ind]),
+            torch.FloatTensor(self.next_states[ind]),
+            torch.FloatTensor(self.dones[ind])
+        )
+\end{lstlisting}
+
+
+
+\subsection{Network Definitions}\label{ssec:networks}
+
+
+
+\begin{lstlisting}[caption={Network Definitions}, label={lst:networks}]
+class CriticNetwork(nn.Module):
+    """Twin Q-networks inside a single module for clean optimization."""
+    def __init__(self, state_dim, action_dim, hidden_dim=256):
+        super(CriticNetwork, self).__init__()
+        # Q1
+        self.q1 = nn.Sequential(
+            nn.Linear(state_dim + action_dim, hidden_dim), nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim), nn.ReLU(),
+            nn.Linear(hidden_dim, 1)
+        )
+        # Q2
+        self.q2 = nn.Sequential(
+            nn.Linear(state_dim + action_dim, hidden_dim), nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim), nn.ReLU(),
+            nn.Linear(hidden_dim, 1)
+        )
+
+    def forward(self, state, action):
+        sa = torch.cat([state, action], dim=-1)
+        return self.q1(sa), self.q2(sa)
+
+
+class ActorNetwork(nn.Module):
+    def __init__(self, state_dim, action_dim, hidden_dim=256, log_std_min=-20, log_std_max=2):
+        super(ActorNetwork, self).__init__()
+        self.log_std_min = log_std_min
+        self.log_std_max = log_std_max
+        
+        self.net = nn.Sequential(
+            nn.Linear(state_dim, hidden_dim), nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim), nn.ReLU()
+        )
+        self.mu = nn.Linear(hidden_dim, action_dim)
+        self.log_std = nn.Linear(hidden_dim, action_dim)
+
+    def forward(self, state):
+        x = self.net(state)
+        mu = self.mu(x)
+        log_std = self.log_std(x)
+        log_std = torch.clamp(log_std, self.log_std_min, self.log_std_max)
+        return mu, log_std
+
+    def sample(self, state):
+        mu, log_std = self.forward(state)
+        std = log_std.exp()
+        
+        # Reparameterization trick
+        normal = Normal(mu, std)
+        x_t = normal.rsample()
+        action = torch.tanh(x_t)
+        
+        # Tanh Log-Likelihood Correction
+        log_prob = normal.log_prob(x_t) - torch.log(1 - action.pow(2) + 1e-6)
+        log_prob = log_prob.sum(dim=-1, keepdim=True)
+        
+        return action, log_prob
+\end{lstlisting}
+
+
+
+\subsection{SAC Agent}\label{ssec:sac-agent}
+
+
+
+\begin{lstlisting}[caption={SAC Agent}, label={lst:sac}]
+class SACAgent:
+    def __init__(self, state_dim, action_dim, lr=3e-4, gamma=0.99, tau=0.005):
+        self.gamma = gamma
+        self.tau = tau
+        self.action_dim = action_dim
+
+        # Critics
+        self.critic = CriticNetwork(state_dim, action_dim)
+        self.critic_target = CriticNetwork(state_dim, action_dim)
+        self.critic_target.load_state_dict(self.critic.state_dict())
+        self.critic_opt = optim.Adam(self.critic.parameters(), lr=lr)
+
+        # Actor
+        self.actor = ActorNetwork(state_dim, action_dim)
+        self.actor_opt = optim.Adam(self.actor.parameters(), lr=lr)
+
+        # Automatic Entropy Tuning
+        self.target_entropy = -action_dim
+        self.log_alpha = torch.zeros(1, requires_grad=True)
+        self.alpha_opt = optim.Adam([self.log_alpha], lr=lr)
+
+    @property
+    def alpha(self):
+        return self.log_alpha.exp()
+
+    def select_action(self, state, evaluate=False):
+        state = torch.FloatTensor(state).unsqueeze(0)
+        if evaluate:
+            with torch.no_grad():
+                mu, _ = self.actor(state)
+                action = torch.tanh(mu)
+            return action.numpy()[0]
+        else:
+            with torch.no_grad():
+                action, _ = self.actor.sample(state)
+            return action.numpy()[0]
+
+    def update(self, memory, batch_size):
+        state, action, reward, next_state, done = memory.sample(batch_size)
+
+        # 1. Update Critic
+        with torch.no_grad():
+            next_action, next_log_prob = self.actor.sample(next_state)
+            target_q1, target_q2 = self.critic_target(next_state, next_action)
+            target_q = torch.min(target_q1, target_q2) - self.alpha * next_log_prob
+            expected_q = reward + (1 - done) * self.gamma * target_q
+
+        curr_q1, curr_q2 = self.critic(state, action)
+        critic_loss = nn.MSELoss()(curr_q1, expected_q) + nn.MSELoss()(curr_q2, expected_q)
+
+        self.critic_opt.zero_grad()
+        critic_loss.backward()
+        self.critic_opt.step()
+
+        # 2. Update Actor
+        new_action, log_prob = self.actor.sample(state)
+        q1, q2 = self.critic(state, new_action)
+        min_q = torch.min(q1, q2)
+        
+        actor_loss = (self.alpha * log_prob - min_q).mean()
+
+        self.actor_opt.zero_grad()
+        actor_loss.backward()
+        self.actor_opt.step()
+
+        # 3. Update Alpha
+        alpha_loss = -(self.log_alpha * (log_prob + self.target_entropy).detach()).mean()
+
+        self.alpha_opt.zero_grad()
+        alpha_loss.backward()
+        self.alpha_opt.step()
+
+        # 4. Soft Update Targets
+        for param, target_param in zip(self.critic.parameters(), self.critic_target.parameters()):
+            target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
+\end{lstlisting}
+
+
+
+% ============================================================
+
+% Chapter 14: Practical Projects
+
+% ============================================================
+
+\section{Practical Projects}\label{sec:projects}
+
+
+
+\subsection{Quadcopter / Drone Control}\label{ssec:drone}
+
+
+
+\textbf{Environment:} \texttt{gym-pybullet-drones} or AirSim
+
+\textbf{Why SAC fits:} Drones require precise, continuous motor RPM adjustments. SAC's entropy exploration naturally discovers smoother control trajectories.
+
+
+
+\subsection{Autonomous Driving \& Lane Keeping}\label{ssec:driving}
+
+
+
+\textbf{Environment:} CARLA Simulator or \texttt{highway-env}
+
+\textbf{Why SAC fits:} Driving relies on smooth throttle, braking, and steering inputs. The maximum entropy framework prevents the vehicle from getting trapped in local minima.
+
+
+
+\subsection{Bipedal Locomotion}\label{ssec:bipedal}
+
+
+
+\textbf{Environment:} MuJoCo (\texttt{Ant-v4}, \texttt{Walker2d-v4}, or \texttt{Humanoid-v4})
+
+\textbf{Why SAC fits:} SAC is one of the few algorithms robust enough to successfully map coordinated continuous joint movements for top-heavy bipeds.
+
+
+
+\subsection{Financial Portfolio Optimization}\label{ssec:finance}
+
+
+
+\textbf{Environment:} FinRL framework or custom Gymnasium asset tracking code.
+
+\textbf{Why SAC fits:} The action space is a softmax probability vector over continuous asset weights. SAC's entropy exploration acts as an \textbf{implicit risk-management tool}.
+
+
+
+% ============================================================
+
+% Chapter 15: Training Diagnostics
+
+% ============================================================
+
+\section{Training Diagnostics}\label{sec:diagnostics}
+
+
+
+\subsection{Understanding Reward Vibration}\label{ssec:vibration}
+
+
+
+The ``huge vibration'' in rewards during training is actually \textbf{not a failure to converge}. Your SAC agent has likely already learned the optimal policy!
+
+The vibration is a combined result of how the environment is designed and how SAC samples actions during training.
+
+
+
+\subsection{The Role of Randomized Initial States}\label{ssec:random-init}
+
+
+
+Your code is running on \texttt{Pendulum-v1}. In this environment, every single time an episode resets, the pendulum is spawned at a \textbf{completely random angle} ($\theta \in [-\pi, \pi]$) with random velocity.
+
+\begin{itemize}
+  \item \textbf{Single-Digit Episodes (e.g., -1.59):} The pendulum happened to spawn almost perfectly upright.
+  \item \textbf{High-Negative Episodes (e.g., -115.40):} The pendulum spawned hanging straight down.
+\end{itemize}
+
+
+
+\subsection{How to Verify True Convergence}\label{ssec:verify}
+
+
+
+To see if your agent has actually converged, test it \textbf{deterministically}:
+
+\begin{lstlisting}
+eval_reward = 0
+eval_state, _ = env.reset()
+eval_done = False
+
+while not eval_done:
+    action = agent.select_action(eval_state, evaluate=True)
+    scaled_action = action * env.action_space.high[0]
+    
+    next_state, reward, terminated, truncated, _ = env.step(scaled_action)
+    eval_done = terminated or truncated
+    eval_state = next_state
+    eval_reward += reward
+
+print(f"=== DETERMINISTIC EVALUATION REWARD: {eval_reward:.2f} ===")
+\end{lstlisting}
+
+The deterministic evaluation rewards will be \textbf{consistently high and smooth}.
+
+
+
+% ============================================================
+
+% Chapter 16: Study Quiz
+
+% ============================================================
+
+\section{Study Quiz}\label{sec:quiz}
+
+
+
+\subsection{Question 1: Core Optimization Objective}\label{ssec:q1}
+
+
+
+\textbf{What is the core optimization objective of SAC that distinguishes it from standard model-free RL?}
+
+A) Minimizing the tracking error of a reference trajectory.
+
+B) Maximizing expected return while also maximizing policy entropy.
+
+C) Maximizing the deterministic reward of the environment.
+
+D) Minimizing the variance of the state-value function updates.
+
+\begin{keypoint}[Answer: B]
+
+SAC augments the standard reward maximization objective with an entropy term. This framework encourages exploration and robustness by rewarding the policy for acting randomly.
+
+\end{keypoint}
+
+
+
+\subsection{Question 2: The Temperature Parameter ($\alpha$)}\label{ssec:q2}
+
+
+
+\textbf{What happens if $\alpha$ is set to 0 in SAC?}
+
+A) The policy becomes purely random, prioritizing maximum entropy.
+
+B) The critic updates stop because the soft Q-value function becomes undefined.
+
+C) The algorithm reduces to a standard, non-entropy-augmented RL algorithm.
+
+D) The actor will completely stop updating because gradients vanish.
+
+\begin{keypoint}[Answer: C]
+
+Setting $\alpha = 0$ removes the entropy regularization term completely. The objective function simplifies back to standard expected reward maximization.
+
+\end{keypoint}
+
+
+
+\subsection{Question 3: Twin Q-Functions}\label{ssec:q3}
+
+
+
+\textbf{Why does SAC use two Q-networks?}
+
+A) To mitigate overestimation bias by taking the minimum of the two targets.
+
+B) To separately model the rewards from the environment and the intrinsic entropy rewards.
+
+C) To allow simultaneous on-policy and off-policy evaluation.
+
+D) To compute the policy gradient using a contrastive loss between two independent critics.
+
+\begin{keypoint}[Answer: A]
+
+Taking the minimum of two independent Q-value targets bounds the overestimation bias that commonly plagues actor-critic methods.
+
+\end{keypoint}
+
+
+
+\subsection{Question 4: Continuous Action Spaces}\label{ssec:q4}
+
+
+
+\textbf{How does the actor network output actions for stochastic exploration?}
+
+A) It outputs a deterministic action vector combined with Ornstein-Uhlenbeck noise.
+
+B) It outputs discrete logits representing a softmax probability distribution.
+
+C) It outputs a single scalar value corresponding to the expected value.
+
+D) It outputs the mean and standard deviation of a Gaussian distribution.
+
+\begin{keypoint}[Answer: D]
+
+The policy is parameterized as a squashed Gaussian distribution. The neural network outputs the mean and variance for each action dimension.
+
+\end{keypoint}
+
+
+
+\subsection{Question 5: Gradient Variance}\label{ssec:q5}
+
+
+
+\textbf{Which technique is used in SAC to compute low-variance gradients for the policy?}
+
+A) The REINFORCE score function estimator.
+
+B) The reparameterization trick (pathwise derivative estimator).
+
+C) Generalized Advantage Estimation (GAE).
+
+D) Importance sampling correction from an on-policy buffer.
+
+\begin{keypoint}[Answer: B]
+
+The reparameterization trick expresses the stochastic action as a deterministic function of the policy parameters and an independent noise variable.
+
+\end{keypoint}
+
+
+
+\subsection{Question 6: Soft Q-Value Target}\label{ssec:q6}
+
+
+
+\textbf{What is the target value function $y$ for a transition $(s, a, r, s')$ in SAC?}
+
+A) $y = r + \gamma[\min_i Q_{\theta_i}^{\text{target}}(s', a') - \alpha \log\pi_\phi(a'|s')]$
+
+B) $y = r + \gamma \max_{a'} [\min_i Q_{\theta_i}(s', a')]$
+
+C) $y = r + \alpha \log\pi_\phi(a|s) + \gamma \max_i Q_{\theta_i}(s', a')$
+
+D) $y = r + \gamma [\frac{1}{2}Q_{\theta_1}(s', a') + Q_{\theta_2}(s', a')]$
+
+\begin{keypoint}[Answer: A]
+
+The target value incorporates the reward, discounted minimum soft Q-value, and subtracts the scaled log-probability for the entropy bonus.
+
+\end{keypoint}
+
+
+
+\subsection{Question 7: Automatic Temperature Adjustment}\label{ssec:q7}
+
+
+
+\textbf{How is $\alpha$ handled in modern implementations of SAC?}
+
+A) Decayed according to a predefined exponential schedule.
+
+B) Fixed as a hyperparameter that must be manually tuned.
+
+C) Automatically adjusted over time by optimizing a loss constrained to a target entropy.
+
+D) Learned directly as an extra output head of the Critic network.
+
+\begin{keypoint}[Answer: C]
+
+Modern SAC automatically tunes $\alpha$ dynamically by formulating a constrained optimization problem.
+
+\end{keypoint}
+
+
+
+\subsection{Question 8: Algorithm Type}\label{ssec:q8}
+
+
+
+\textbf{Is SAC on-policy or off-policy, and what component enables this?}
+
+A) On-policy, enabled by calculating the soft policy gradient directly from current rollouts.
+
+B) Off-policy, enabled by a replay buffer that stores past experiences.
+
+C) Off-policy, enabled by updating the policy using importance sampling weights.
+
+D) On-policy, enabled by maintaining synchronized target networks.
+
+\begin{keypoint}[Answer: B]
+
+SAC is an off-policy algorithm. It utilizes a replay buffer to store and reuse historical data transitions.
+
+\end{keypoint}
+
+
+
+\subsection{Question 9: Benefits of Maximum Entropy}\label{ssec:q9}
+
+
+
+\textbf{What is a primary benefit of maximizing entropy in SAC?}
+
+A) It encourages the policy to explore more widely and prevent premature convergence.
+
+B) It ensures that the critic network converges faster.
+
+C) It completely eliminates the need for target networks.
+
+D) It reduces the memory requirements of the replay buffer.
+
+\begin{keypoint}[Answer: A]
+
+Explicitly maximizing entropy ensures the agent keeps its options open and continues exploring alternative actions.
+
+\end{keypoint}
+
+
+
+\subsection{Question 10: Target Network Updates}\label{ssec:q10}
+
+
+
+\textbf{How are the parameters of the target Q-networks updated in SAC?}
+
+A) By copying the weights every fixed number of steps (hard updates).
+
+B) Directly via gradient descent using the mean squared error.
+
+C) They are not updated online; trained offline after collecting data.
+
+D) Through Polyak averaging (soft updates) using a small coefficient $\tau$.
+
+\begin{keypoint}[Answer: D]
+
+Target networks in SAC track the main online Q-networks via soft updates: $\theta_{\text{target}} \leftarrow \tau \theta + (1-\tau)\theta_{\text{target}}$.
+
+\end{keypoint}
+
+
+
+% ============================================================
+
+% Appendix A: Mathematical Foundations
+
+% ============================================================
+
+\appendix
+
+\section{Appendix A: Mathematical Foundations}\label{sec:appendix-a}
+
+
+
+\subsection{Kullback-Leibler Divergence Properties}\label{ssec:kl-prop}
+
+
+
+The KL divergence $D_{\text{KL}}(P \| Q)$ measures the ``distance'' from distribution $Q$ to $P$:
+
+$$D_{\text{KL}}(P \| Q) = \mathbb{E}_{x \sim P}\left[\log\frac{P(x)}{Q(x)}\right]$$
+
+\textbf{Key Properties:}
+
+\begin{enumerate}
+  \setlength{\itemsep}{0.2em}
+  \item \textbf{Non-negativity:} $D_{\text{KL}}(P \| Q) \geq 0$
+  \item \textbf{Zero iff identical:} $D_{\text{KL}}(P \| Q) = 0 \iff P = Q$
+  \item \textbf{Asymmetry:} $D_{\text{KL}}(P \| Q) \neq D_{\text{KL}}(Q \| P)$ in general
+\end{enumerate}
+
+
+
+\subsection{Change-of-Variables Formula (General Form)}\label{ssec:cov-general}
+
+
+
+For a transformation $a = f(u)$ where $f$ is invertible:
+
+$$\pi_A(a) = \pi_U(f^{-1}(a)) \cdot \left|\det\left(\frac{d f^{-1}}{da}\right)\right|$$
+
+
+
+\subsection{Softplus Function Stable Implementation}\label{ssec:softplus}
+
+
+
+The softplus function:
+
+$$\text{softplus}(x) = \log(1 + e^x)$$
+
+\textbf{Connection to tanh correction:}
+
+$$\log(1 - \tanh^2(u)) = 2\log 2 - u - \text{softplus}(-2u)$$
+
+
+
+% ============================================================
+
+% Appendix B: Symbol Table
+
+% ============================================================
+
+\section{Appendix B: Symbol Table}\label{sec:appendix-b}
+
+
+
+\begin{longtable}{m{3cm}m{6cm}}
+  \caption{Symbol Table} \label{tab:symbols} \\
+  \toprule
+  \textbf{Symbol} & \textbf{Meaning} \\
+  \midrule
+  \endfirsthead
+  \toprule
+  \textbf{Symbol} & \textbf{Meaning} \\
+  \midrule
+  \endhead
+  \bottomrule
+  \endlastfoot
+
+  $\pi$ & Policy function \\
+  $\pi_\phi(a|s)$ & Policy parameterized by neural network with parameters $\phi$ \\
+  $\rho_\pi$ & State-action trajectory distribution under policy $\pi$ \\
+  $\alpha$ & Temperature parameter controlling entropy-reward trade-off \\
+  $\mathcal{H}(\pi(\cdot|s))$ & Shannon entropy of policy at state $s$ \\
+  $\bar{\mathcal{H}}$ & Target entropy threshold \\
+  $Q(s,a)$ & Soft Q-function: value of taking action $a$ in state $s$ \\
+  $V(s)$ & Soft V-function: value of being in state $s$ \\
+  $\gamma$ & Discount factor \\
+  $\mathcal{T}^\pi$ & Soft Bellman backup operator \\
+  $Z(s)$ & Partition function for normalizing the Boltzmann distribution \\
+  $Q_\theta(s,a)$ & Q-function parameterized by neural network with parameters $\theta$ \\
+  $Q_{\bar{\theta}}$ & Target Q-network (slowly updated) \\
+  $\epsilon$ & Random noise vector for reparameterization trick \\
+  $\mu_\phi(s)$ & Mean of the Gaussian policy \\
+  $\sigma_\phi(s)$ & Standard deviation of the Gaussian policy \\
+  $\tau$ & Polyak averaging coefficient for soft target updates \\
+  $\mathcal{D}$ & Replay buffer containing past transitions \\
+  $D_{\text{KL}}(P \| Q)$ & Kullback-Leibler divergence from $Q$ to $P$ \\
+  $\text{softplus}(x)$ & $\log(1 + e^x)$ \\
+\end{longtable}
+
+
+
+% ============================================================
+
+% Appendix C: Core Formula Summary
+
+% ============================================================
+
+\section{Appendix C: Core Formula Summary}\label{sec:appendix-c}
+
+
+
+\textbf{Maximum Entropy Objective:}
+
+$$J(\pi) = \mathbb{E}_{\tau \sim \pi}\left[\sum_{t=0}^{T} r(s_t, a_t) + \alpha \mathcal{H}(\pi(\cdot|s_t))\right]$$
+
+
+
+\textbf{Soft Bellman Equation:}
+
+$$Q(s_t, a_t) = r(s_t, a_t) + \gamma \mathbb{E}_{s_{t+1} \sim p}[V(s_{t+1})]$$
+
+
+
+\textbf{Soft V-Function:}
+
+$$V(s_t) = \mathbb{E}_{a_t \sim \pi}[Q(s_t, a_t) - \alpha \log\pi(a_t|s_t)]$$
+
+
+
+\textbf{Reparameterization Trick:}
+
+$$a = f_\phi(\epsilon; s) = \tanh(\mu_\phi(s) + \sigma_\phi(s) \odot \epsilon), \quad \epsilon \sim \mathcal{N}(0, I)$$
+
+
+
+\textbf{Tanh Log-Likelihood Correction:}
+
+$$\log\pi(a|s) = \log\mu(u|s) - \sum_{i=1}^{D} \log(1 - \tanh^2(u_i))$$
+
+
+
+\textbf{Stable Tanh Correction:}
+
+$$\log(1 - \tanh^2(u)) = 2\log 2 - u - \text{softplus}(-2u)$$
+
+
+
+\textbf{Actor Loss:}
+
+$$J_\pi(\phi) = \mathbb{E}_{s \sim \mathcal{D}, a \sim \pi_\phi}[\alpha \log\pi_\phi(a|s) - Q_\theta(s,a)]$$
+
+
+
+\textbf{Critic Loss:}
+
+$$J_Q(\theta) = \mathbb{E}_{(s,a,r,s') \sim \mathcal{D}}\left[\frac{1}{2}\left(Q_\theta(s,a) - (r + \gamma(Q_{\bar{\theta}}(s', a') - \alpha \log\pi_\phi(a'|s')))\right)^2\right]$$
+
+
+
+\textbf{Alpha Loss (Automatic Tuning):}
+
+$$J(\alpha) = \alpha \cdot \mathbb{E}_{a_t \sim \pi_\phi}[-\log\pi_\phi(a_t|s_t) - \bar{\mathcal{H}}]$$
+
+
+
+\textbf{Polyak Averaging (Soft Updates):}
+
+$$\bar{\theta} \leftarrow \tau \theta + (1 - \tau)\bar{\theta}$$
+
+
+
+\textbf{Twin Q-Minimum Trick:}
+
+$$y = r + \gamma \left(\min_i Q_{\bar{\theta}_i}(s', a') - \alpha \log\pi_\phi(a'|s')\right)$$
+
+
+
+\begin{center}
+  \begin{tabular}{p{15cm}}
+    \hline
+    \textbf{\large Author Information} \\
+    \textbf{Name:} 千喜 Qx \\
+    \textbf{Date:} 2026/06/09 \\
+    \textbf{Based on materials from:} Haarnoja et al. (2018) and subsequent SAC-v2 revisions \\
+    \textbf{Introduction：} 一位刚刚入门具身科研领域的学徒，未来想长期从事具身方向的科研和创业，用机器人替代人类重复的体力劳动。欢迎大家加我vx交朋友，我很丰富，无法简介 ;) \\
+    \textbf{vx：} Y1832800 \\
+    \hline
+  \end{tabular}
+\end{center}
+
+
+
+\end{document}

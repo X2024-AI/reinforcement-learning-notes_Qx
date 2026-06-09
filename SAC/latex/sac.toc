@@ -1,0 +1,91 @@
+\contentsline {section}{\numberline {1}Background and Motivation}{1}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Limitations of Standard Reinforcement Learning}{1}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Maximum Entropy Reinforcement Learning Framework}{1}{subsection.1.2}%
+\contentsline {subsection}{\numberline {1.3}Why Entropy Regularization?}{1}{subsection.1.3}%
+\contentsline {section}{\numberline {2}The Maximum Entropy Objective}{2}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Standard RL Objective}{2}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Entropy-Augmented Objective}{2}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}The Temperature Parameter $\alpha $}{2}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Shannon Entropy Definition}{3}{subsection.2.4}%
+\contentsline {section}{\numberline {3}Soft Value Functions}{3}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Soft Q-Function: Definition and Intuition}{3}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Soft V-Function: Definition and Intuition}{3}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Relationship Between Soft Q and Soft V}{3}{subsection.3.3}%
+\contentsline {subsection}{\numberline {3.4}The Soft Bellman Equation}{3}{subsection.3.4}%
+\contentsline {section}{\numberline {4}Soft Policy Iteration}{4}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Overview: Two-Step Alternating Process}{4}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Soft Policy Evaluation: The Contraction Operator}{4}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Soft Policy Improvement: Constrained Optimization}{4}{subsection.4.3}%
+\contentsline {subsection}{\numberline {4.4}The Partition Function $Z(s)$ and Normalization}{4}{subsection.4.4}%
+\contentsline {subsection}{\numberline {4.5}KL Divergence Projection (Information Projection)}{5}{subsection.4.5}%
+\contentsline {subsection}{\numberline {4.6}Mathematical Proof of Monotonic Improvement}{5}{subsection.4.6}%
+\contentsline {section}{\numberline {5}Function Approximation}{5}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Neural Network Architecture}{6}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Critic Network Loss (Q-Network)}{6}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Actor Network Loss ($\pi $-Network)}{6}{subsection.5.3}%
+\contentsline {subsection}{\numberline {5.4}The Reparameterization Trick}{6}{subsection.5.4}%
+\contentsline {section}{\numberline {6}The Tanh Correction Term}{7}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Why We Need Tanh Squashing}{7}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Change-of-Variables Formula}{7}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Jacobian Determinant for Diagonal Gaussian}{7}{subsection.6.3}%
+\contentsline {subsection}{\numberline {6.4}Deriving the Final Log-Likelihood}{7}{subsection.6.4}%
+\contentsline {subsection}{\numberline {6.5}Stable Numerical Implementation}{8}{subsection.6.5}%
+\contentsline {section}{\numberline {7}Automatic Entropy Tuning}{8}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Constrained Formulation}{8}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Lagrange Multiplier Method}{8}{subsection.7.2}%
+\contentsline {subsection}{\numberline {7.3}The $\alpha $ Update Loss Function}{8}{subsection.7.3}%
+\contentsline {subsection}{\numberline {7.4}Dynamics of $\alpha $ Adaptation}{8}{subsection.7.4}%
+\contentsline {subsection}{\numberline {7.5}Choosing Target Entropy $\bar {\mathcal {H}}$}{9}{subsection.7.5}%
+\contentsline {section}{\numberline {8}The Partition Function $Z(s)$ in Practice}{9}{section.8}%
+\contentsline {subsection}{\numberline {8.1}Physics Origin: Boltzmann Distribution}{9}{subsection.8.1}%
+\contentsline {subsection}{\numberline {8.2}Why $Z(s)$ Cannot Be Computed Directly}{10}{subsection.8.2}%
+\contentsline {subsection}{\numberline {8.3}The Gradient Vanishing Trick}{10}{subsection.8.3}%
+\contentsline {section}{\numberline {9}Actor-Critic Architecture Analysis}{10}{section.9}%
+\contentsline {subsection}{\numberline {9.1}Why Both Q-Network and V-Network? (Original Design)}{10}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Why One Network Is Enough (SAC-v2)}{10}{subsection.9.2}%
+\contentsline {subsection}{\numberline {9.3}The Circular Dependency Problem}{11}{subsection.9.3}%
+\contentsline {subsection}{\numberline {9.4}Target Network and Polyak Averaging}{11}{subsection.9.4}%
+\contentsline {section}{\numberline {10}Twin Q-Networks and Overestimation Bias}{11}{section.10}%
+\contentsline {subsection}{\numberline {10.1}The Maximization Bias Problem}{11}{subsection.10.1}%
+\contentsline {subsection}{\numberline {10.2}Mathematical Analysis of Error Propagation}{11}{subsection.10.2}%
+\contentsline {subsection}{\numberline {10.3}The Minimum Q-Value Trick (Clipped Double-Q)}{12}{subsection.10.3}%
+\contentsline {section}{\numberline {11}Off-Policy vs On-Policy Analysis}{12}{section.11}%
+\contentsline {subsection}{\numberline {11.1}Why SAC Can Be Off-Policy}{12}{subsection.11.1}%
+\contentsline {subsection}{\numberline {11.2}Why PPO Is Inherently On-Policy}{12}{subsection.11.2}%
+\contentsline {subsection}{\numberline {11.3}Key Architectural Differences}{13}{subsection.11.3}%
+\contentsline {section}{\numberline {12}Implementation Details and Engineering Tricks}{13}{section.12}%
+\contentsline {subsection}{\numberline {12.1}Why Predict log\_std Instead of std}{13}{subsection.12.1}%
+\contentsline {subsection}{\numberline {12.2}Clamping log\_std: [-20, 2] Rationale}{13}{subsection.12.2}%
+\contentsline {subsection}{\numberline {12.3}The .sum(dim=-1, keepdim=True) Operation}{13}{subsection.12.3}%
+\contentsline {subsection}{\numberline {12.4}Exploration vs Evaluation Mode}{14}{subsection.12.4}%
+\contentsline {section}{\numberline {13}Complete PyTorch Implementation}{14}{section.13}%
+\contentsline {subsection}{\numberline {13.1}Replay Buffer}{14}{subsection.13.1}%
+\contentsline {subsection}{\numberline {13.2}Network Definitions}{15}{subsection.13.2}%
+\contentsline {subsection}{\numberline {13.3}SAC Agent}{16}{subsection.13.3}%
+\contentsline {section}{\numberline {14}Practical Projects}{18}{section.14}%
+\contentsline {subsection}{\numberline {14.1}Quadcopter / Drone Control}{18}{subsection.14.1}%
+\contentsline {subsection}{\numberline {14.2}Autonomous Driving \& Lane Keeping}{18}{subsection.14.2}%
+\contentsline {subsection}{\numberline {14.3}Bipedal Locomotion}{18}{subsection.14.3}%
+\contentsline {subsection}{\numberline {14.4}Financial Portfolio Optimization}{18}{subsection.14.4}%
+\contentsline {section}{\numberline {15}Training Diagnostics}{19}{section.15}%
+\contentsline {subsection}{\numberline {15.1}Understanding Reward Vibration}{19}{subsection.15.1}%
+\contentsline {subsection}{\numberline {15.2}The Role of Randomized Initial States}{19}{subsection.15.2}%
+\contentsline {subsection}{\numberline {15.3}How to Verify True Convergence}{19}{subsection.15.3}%
+\contentsline {section}{\numberline {16}Study Quiz}{19}{section.16}%
+\contentsline {subsection}{\numberline {16.1}Question 1: Core Optimization Objective}{19}{subsection.16.1}%
+\contentsline {subsection}{\numberline {16.2}Question 2: The Temperature Parameter ($\alpha $)}{20}{subsection.16.2}%
+\contentsline {subsection}{\numberline {16.3}Question 3: Twin Q-Functions}{20}{subsection.16.3}%
+\contentsline {subsection}{\numberline {16.4}Question 4: Continuous Action Spaces}{20}{subsection.16.4}%
+\contentsline {subsection}{\numberline {16.5}Question 5: Gradient Variance}{21}{subsection.16.5}%
+\contentsline {subsection}{\numberline {16.6}Question 6: Soft Q-Value Target}{21}{subsection.16.6}%
+\contentsline {subsection}{\numberline {16.7}Question 7: Automatic Temperature Adjustment}{21}{subsection.16.7}%
+\contentsline {subsection}{\numberline {16.8}Question 8: Algorithm Type}{21}{subsection.16.8}%
+\contentsline {subsection}{\numberline {16.9}Question 9: Benefits of Maximum Entropy}{22}{subsection.16.9}%
+\contentsline {subsection}{\numberline {16.10}Question 10: Target Network Updates}{22}{subsection.16.10}%
+\contentsline {section}{\numberline {A}Appendix A: Mathematical Foundations}{22}{appendix.A}%
+\contentsline {subsection}{\numberline {A.1}Kullback-Leibler Divergence Properties}{22}{subsection.A.1}%
+\contentsline {subsection}{\numberline {A.2}Change-of-Variables Formula (General Form)}{23}{subsection.A.2}%
+\contentsline {subsection}{\numberline {A.3}Softplus Function Stable Implementation}{23}{subsection.A.3}%
+\contentsline {section}{\numberline {B}Appendix B: Symbol Table}{23}{appendix.B}%
+\contentsline {section}{\numberline {C}Appendix C: Core Formula Summary}{24}{appendix.C}%
+\contentsfinish 
